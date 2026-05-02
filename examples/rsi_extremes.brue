@@ -1,0 +1,19 @@
+# Marks bars where RSI is overbought or oversold and tints the
+# bar background red/green accordingly. For the RSI line itself,
+# add the RSI indicator from the chart host's built-in menu.
+
+strategy("RSI Extremes", overlay=true)
+
+rsi_len    = input(14, "RSI length")
+overbought = input(70, "Overbought")
+oversold   = input(30, "Oversold")
+
+rsi_val = rsi(close, rsi_len)
+
+if rsi_val > overbought:
+    bgcolor(rgba(255, 0, 0, 0.10))
+    shape(circle, location=above_bar, color=red, size="small")
+
+if rsi_val < oversold:
+    bgcolor(rgba(0, 255, 0, 0.10))
+    shape(circle, location=below_bar, color=green, size="small")

@@ -1,0 +1,30 @@
+# Pairs trade: enter long EUR/USD when its spread vs GBP/USD
+# is statistically cheap (z-score below threshold), short when
+# expensive. Demonstrates the `use SYMBOL` cross-pair feature.
+
+strategy("EUR vs GBP pairs", overlay=true,
+         capital=10000, default_qty=1)
+
+use "GBP/USD" as gbp
+
+window     = input(60,  "Rolling window")
+corr_floor = input(0.5, "Min |corr| to trade")
+entry_z    = input(2.0, "Entry |zscore|")
+exit_z     = input(0.3, "Exit |zscore|")
+
+corr = correlation(close, gbp.close, window)
+z    = zscore(close - gbp.close, window)
+
+active = corr > corr_floor
+
+if active and z < -entry_z and position.size == 0:
+    entry("long_eur", long, qty=1)
+    shape(arrow_up,   location=below_bar, color=green, size="small")
+if active and z >  entry_z and position.size == 0:
+    entry("short_eur", short, qty=1)
+    shape(arrow_down, location=above_bar, color=red,   size="small")
+
+if position.size > 0 and z > -exit_z:
+    exit("close_long",  from_entry="long_eur")
+if position.size < 0 and z <  exit_z:
+    exit("close_short", from_entry="short_eur")
