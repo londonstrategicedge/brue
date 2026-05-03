@@ -18,11 +18,11 @@ A Brue script can:
 - **Pull a second instrument** with `use SYMBOL [at TF] [as ALIAS]` and reference it as `alias.close`, `alias.high`, etc.
 
 A Brue script cannot:
-- **Draw continuous indicator lines** (no `plot()`). For EMA / RSI / MACD lines on the chart, add them from the chart's built-in indicator menu.
+- **Render arbitrary continuous series** with `plot()`. The `plot()` call exists, but it only registers chart-native indicators (`ema`, `sma`, `rsi`, `macd`, `bb`, `stoch`, `atr`, `vwap`, `adx`, `cci`, `roc`) on the host's indicator panel. `plot(some_arbitrary_expression)` is a no-op. For arbitrary series, add an indicator from the chart's built-in indicator menu directly.
 - **Fetch data from arbitrary symbols / timeframes / fundamentals** at runtime. Use `use SYMBOL` for cross-pair; the engine pre-fetches that dataset for you.
 - **Fire alerts** to a notification queue. Mark interesting bars with `shape()` instead.
 
-If you came from Pine Script, Brue is closer to Pine's `strategy()` + drawing primitives than to Pine's `indicator()` + `plot()`. The line/box/polyline/alert APIs do not exist.
+If you came from Pine Script, Brue's `plot()` works the same way as Pine's: bare `ema(close, 20)` is a value, `plot(ema(close, 20))` is what makes the chart show it. The line/box/polyline/alert APIs do not exist; mark bars with `shape()` and `label()` instead.
 
 ---
 
@@ -42,16 +42,17 @@ If you came from Pine Script, Brue is closer to Pine's `strategy()` + drawing pr
 12. [Live Trading Verbs](#live-trading-verbs)
 13. [User Inputs](#user-inputs)
 14. [Drawing Primitives](#drawing-primitives)
-15. [Colors](#colors)
-16. [Math and Logic](#math-and-logic)
-17. [Time Functions](#time-functions)
-18. [Moving Averages (15)](#moving-averages)
-19. [Oscillators (31)](#oscillators)
-20. [Trend Indicators (15)](#trend-indicators)
-21. [Volatility (16)](#volatility)
-22. [Volume Indicators (14)](#volume-indicators)
-23. [Statistics and Regression (8)](#statistics-and-regression)
-24. [Removed and Unsupported](#removed-and-unsupported)
+15. [Plotting Indicators](#plotting-indicators)
+16. [Colors](#colors)
+17. [Math and Logic](#math-and-logic)
+18. [Time Functions](#time-functions)
+19. [Moving Averages (15)](#moving-averages)
+20. [Oscillators (31)](#oscillators)
+21. [Trend Indicators (15)](#trend-indicators)
+22. [Volatility (16)](#volatility)
+23. [Volume Indicators (14)](#volume-indicators)
+24. [Statistics and Regression (8)](#statistics-and-regression)
+25. [Removed and Unsupported](#removed-and-unsupported)
 
 ---
 
@@ -524,6 +525,67 @@ Positions: `"top_left"`, `"top_center"`, `"top_right"`, `"middle_left"`, `"middl
 
 ---
 
+## Plotting Indicators
+
+### plot(call_or_var)
+
+Explicit opt-in to register a chart-native indicator. Mirrors Pine Script's `plot()` semantics: bare `ema(close, 20)` is a value used in your script's logic, `plot(ema(close, 20))` is what makes the EMA line appear on the chart.
+
+The runtime evaluates `plot()` as a no-op pass-through (returns its argument unchanged). The visual effect comes from a static AST scan at script Run time: any `plot(...)` wrapping a recognised indicator call gets registered with the chart host's indicator panel, where the user can recolour, resize, hide, or delete the line via the standard cog.
+
+**What `plot()` recognises (constant-period args required):**
+
+| Wrapped call | Registers |
+|--------------|-----------|
+| `plot(ema(close, N))`  / `plot(sma(close, N))`  / `plot(smma(close, N))` | Moving average line on the price overlay |
+| `plot(rsi(close, N))` | RSI subplot |
+| `plot(macd(close, F, S, Sig))` | MACD subplot (line + signal + histogram) |
+| `plot(bb(close, N, K))` | Bollinger Bands on the price overlay |
+| `plot(stoch(high, low, close, K, D, Sm))` | Stochastic subplot |
+| `plot(atr(N))` | ATR subplot |
+| `plot(vwap())` | VWAP on the price overlay |
+| `plot(adx(N))` | ADX subplot |
+| `plot(cci(close, N))` | CCI subplot |
+| `plot(roc(close, N))` | ROC subplot |
+
+`plot()` also traces back through top-level assignments. These are equivalent:
+
+```python
+# Direct
+plot(ema(close, 20))
+
+# Via assignment - the extractor resolves `fast` to its registerable call
+fast = ema(close, 20)
+plot(fast)
+```
+
+**What `plot()` does NOT do:**
+
+- `plot(close * 2)`, `plot(my_correlation_value)`, `plot(some_helper_function(close))` — anything that isn't a direct registerable call (or a variable holding one) is silently ignored. Brue does not render arbitrary continuous series; for those, use the chart host's built-in indicator menu directly.
+- `plot(ema(close, len))` where `len` is dynamic (changes during the script) — only constant-arg periods register. `len = input(20, "Length")` and `len = 20` are both fine because the extractor resolves them; `len` reassigned inside an `if` is not.
+- Anything visual on the chart canvas itself — `plot()` does not paint pixels. It hands the request to the chart host's indicator system and the host's renderer takes over.
+
+**Why this design:**
+
+The previous version of Brue auto-promoted every recognised indicator call to a chart-native indicator regardless of how the result was used. That was friendly for `ema(close, 20)` written on a line by itself, but it spawned mystery subplots whenever someone used the same calls as intermediates — `correlation(roc(close, 1), roc(other.close, 1), 50)` would silently add a ROC subplot the user never asked for. Pine semantics resolve the ambiguity: bare calls are values, `plot()` is the explicit "I want this on the chart" opt-in.
+
+```python
+strategy("EMA Crossover", overlay=true)
+
+fast = ema(close, 9)    # value, used in logic below
+slow = ema(close, 21)   # value, used in logic below
+
+plot(fast)              # explicitly: show this line on the chart
+plot(slow)              # explicitly: show this line on the chart
+
+if crossover(fast, slow):
+    shape(arrow_up, location=below_bar, color=green, size="large", text="BUY")
+if crossunder(fast, slow):
+    shape(arrow_down, location=above_bar, color=red, size="large", text="SELL")
+```
+
+---
+
 ## Colors
 
 ### Named (21)
@@ -766,7 +828,7 @@ These names appear in older docs, Pine Script, or AI training data. They do not 
 | Name | Status | Use instead |
 |------|--------|-------------|
 | `indicator()` declaration | Removed | `strategy(...)` is the only declaration |
-| `plot()` | Removed (throws RuntimeError) | Add the indicator from the chart's built-in indicator menu, or draw with `shape` / `label` / `hline` |
+| `plot(arbitrary_expression)` | No-op | `plot()` only registers chart-native indicators (`plot(ema(close, 20))` etc). For arbitrary series, add an indicator from the chart host's built-in indicator menu. See [Plotting Indicators](#plotting-indicators). |
 | `request(tf, expr)` | Not implemented | `use SYMBOL at TF as alias` then read `alias.close`, etc. |
 | `request_security(symbol, tf, expr)` | Not implemented | `use SYMBOL [at TF] as alias` |
 | `request_financial(...)` | Not implemented |, |
@@ -786,7 +848,7 @@ These names appear in older docs, Pine Script, or AI training data. They do not 
 
 ## Complete Working Examples
 
-### 1. EMA crossover signals (drawings only)
+### 1. EMA crossover signals (with both EMAs visible)
 
 ```python
 strategy("EMA Crossover", overlay=true)
@@ -796,6 +858,11 @@ slow_len = input(21, "Slow EMA length")
 
 fast = ema(close, fast_len)
 slow = ema(close, slow_len)
+
+# Explicit opt-in: show both EMA lines on the chart. Drop the plot()
+# calls if you only want the BUY/SELL arrows.
+plot(fast)
+plot(slow)
 
 if crossover(fast, slow):
     shape(arrow_up,   location=below_bar, color=green, size="large", text="BUY")
@@ -819,13 +886,16 @@ if rsi_val < 30:
     shape(circle, location=below_bar, color=green, size="small")
 ```
 
-### 3. Bollinger band breaks (signals only, add the bands from the indicator menu)
+### 3. Bollinger band breaks (with bands visible)
 
 ```python
 strategy("BB Breaks", overlay=true)
 
 length = input(20,  "BB length", min=5, max=200)
 mult   = input(2.0, "BB std-dev multiplier")
+
+# plot(bb(...)) registers the Bollinger Bands as a chart-native overlay.
+plot(bb(close, length, mult))
 
 mid       = sma(close, length)
 deviation = stddev(close, length) * mult
@@ -858,6 +928,11 @@ rr         = input(2.0, "Reward:risk")
 fast    = ema(close, fast_len)
 slow    = ema(close, slow_len)
 atr_pts = atr(atr_len)
+
+# Show the EMAs on the chart so the user can eyeball the crossovers.
+# atr_pts is intentionally NOT plotted - it's only used for stop sizing.
+plot(fast)
+plot(slow)
 
 go_long = crossover(fast, slow)
 go_flat = crossunder(fast, slow)

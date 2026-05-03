@@ -13,6 +13,9 @@ slow_len = input(21, "Slow EMA length")
 fast = ema(close, fast_len)
 slow = ema(close, slow_len)
 
+plot(fast)              # explicit opt-in: show fast EMA on the chart
+plot(slow)              # explicit opt-in: show slow EMA on the chart
+
 if crossover(fast, slow):
     shape(arrow_up,   location=below_bar, color=green, size="large", text="BUY")
 if crossunder(fast, slow):
@@ -24,6 +27,7 @@ if crossunder(fast, slow):
 A Brue script can do any combination of:
 
 - **Draw on the chart**: `shape`, `label`, `bgcolor`, `hline`, `table`
+- **Plot indicator lines**: `plot(ema(close, 20))` registers the EMA as a chart-native indicator. Bare `ema(close, 20)` is just a value — wrap in `plot()` to show it.
 - **Run a backtest**: `entry`, `exit`, `close_all` plus `position.*` and `strategy.*` namespaces
 - **Send live orders**: `buy`, `sell`, `buy_limit`, `sell_limit`, `buy_stop`, `sell_stop`, `close` (only fire on the most recent bar so historical replay is safe)
 - **Compute indicators**: 143 built-in functions across moving averages, oscillators, trend, volatility, volume, statistics, math, and time
@@ -31,7 +35,7 @@ A Brue script can do any combination of:
 
 ## Documentation
 
-- [SYNTAX.md](SYNTAX.md), complete language reference. Every built-in, every primitive, every keyword, with signatures and examples.
+- [SYNTAX.md](SYNTAX.md), complete language reference. Every built-in, every primitive, every keyword, with signatures and examples. Includes the [Plotting Indicators](SYNTAX.md#plotting-indicators) section that covers the Pine-style `plot()` opt-in.
 - [examples/](examples/), runnable `.brue` scripts.
 - [CHANGELOG.md](CHANGELOG.md), version history.
 
@@ -40,7 +44,7 @@ A Brue script can do any combination of:
 1. **Python-like.** If you can read Python, you can read Brue. No `series float` qualifiers, no scope restrictions, no arbitrary plot/label limits.
 2. **Bar-by-bar with implicit series.** Every variable has a value on every bar. Access history with `[N]`: `close[1]` is the previous close, `rsi(close, 14)[3]` is the RSI value from 3 bars ago.
 3. **One declaration.** Every script begins with `strategy("Title", ...)`. There is no `indicator()`. A script that doesn't call `entry()` / `exit()` / `close_all()` simply behaves as a drawings-only script.
-4. **Strategy + drawing layer, not the indicator system.** Brue does NOT define continuous indicator lines (no `plot()`). For EMA / RSI / MACD lines on the chart, use the chart host's built-in indicator menu. Brue marks bars, draws horizontals, tints backgrounds, and runs strategies; it stays out of the indicator-rendering business.
+4. **Pine-style explicit `plot()`.** Bare `ema(close, 20)` returns a value — same as Pine's `ta.ema(...)`. To show the EMA on the chart, wrap it: `plot(ema(close, 20))`. The runtime hands the request to the chart host's indicator system, where the user can recolour / hide / delete it via the standard cog. Arbitrary expressions (e.g. `plot(some_correlation_value)`) are silently no-ops; for those, add an indicator from the chart host's built-in menu directly.
 5. **AI-friendly.** The language is designed so AI models can write correct Brue from a single prompt. Python-like syntax, clear naming, no ambiguity. The full reference is one file (`SYNTAX.md`).
 
 ## Quick syntax tour

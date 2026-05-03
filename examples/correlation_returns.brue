@@ -1,0 +1,35 @@
+# Cross-pair return correlation.
+# Tracks the rolling Pearson correlation of EUR/USD and GBP/USD bar
+# returns over the last N bars. When the two pairs decouple (corr
+# drops sharply), arrows mark the bars.
+#
+# This script is a good showcase of Brue's Pine-style semantics:
+# bare roc() and correlation() calls are VALUES used in downstream
+# logic - they don't auto-spawn ROC subplots or correlation panels
+# on the chart. Only plot()-wrapped registerable calls get rendered.
+# The arrows below come from shape(), not from any indicator.
+
+strategy("EUR/GBP correlation", overlay=true)
+
+use "GBP/USD" as gbp
+
+window  = input(50,  "Rolling window")
+hot_thr = input(0.85, "Highly coupled threshold")
+mid_thr = input(0.30, "Decoupled threshold")
+
+# Bar-over-bar percentage returns. Both pairs go through roc() so
+# the correlation reads "they moved together this bar" rather than
+# "they're both drifting upward this week" (correlations of raw
+# trending prices are misleading - always correlate on stationary
+# inputs like returns).
+ret_eur = roc(close, 1)
+ret_gbp = roc(gbp.close, 1)
+
+r = correlation(ret_eur, ret_gbp, window)
+
+if r > hot_thr:
+    shape(circle,   location=above_bar, color=blue,  size="small",  text="HIGH+")
+if r < mid_thr:
+    shape(arrow_up, location=below_bar, color=green, size="normal", text="DECOUPLE")
+if r < 0:
+    shape(arrow_up, location=below_bar, color=red,   size="large",  text="DIVERGE")

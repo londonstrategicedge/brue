@@ -1,6 +1,7 @@
 # Marks bars where RSI is overbought or oversold and tints the
-# bar background red/green accordingly. For the RSI line itself,
-# add the RSI indicator from the chart host's built-in menu.
+# bar background red/green accordingly. plot(rsi_val) registers
+# the RSI subplot on the chart - drop it if you only want the
+# bgcolor and shape markers.
 
 strategy("RSI Extremes", overlay=true)
 
@@ -9,6 +10,7 @@ overbought = input(70, "Overbought")
 oversold   = input(30, "Oversold")
 
 rsi_val = rsi(close, rsi_len)
+plot(rsi_val)
 
 if rsi_val > overbought:
     bgcolor(rgba(255, 0, 0, 0.10))

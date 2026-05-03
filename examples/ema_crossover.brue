@@ -1,7 +1,8 @@
 # EMA crossover signals.
 # Drops a BUY arrow when the fast EMA crosses above the slow one
-# and a SELL arrow when it crosses back. Tunable via the chart's
-# settings dialog.
+# and a SELL arrow when it crosses back. plot() makes the EMA lines
+# themselves visible on the chart - drop those two lines if you only
+# want signals.
 
 strategy("EMA Crossover", overlay=true)
 
@@ -10,6 +11,9 @@ slow_len = input(21, "Slow EMA length")
 
 fast = ema(close, fast_len)
 slow = ema(close, slow_len)
+
+plot(fast)
+plot(slow)
 
 if crossover(fast, slow):
     shape(arrow_up,   location=below_bar, color=green, size="large", text="BUY")
