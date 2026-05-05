@@ -32,6 +32,7 @@ A Brue script can do any combination of:
 - **Send live orders**: `buy`, `sell`, `buy_limit`, `sell_limit`, `buy_stop`, `sell_stop`, `close` (only fire on the most recent bar so historical replay is safe)
 - **Compute indicators**: 143 built-in functions across moving averages, oscillators, trend, volatility, volume, statistics, math, and time
 - **Pull a second instrument**: `use SYMBOL [at TF] [as ALIAS]` to bring another symbol or higher timeframe into the script
+- **Query external datasets**: `use "econ"`, `use "earnings"`, `use "cot"`, `use "insider"` for point-in-time economic, fundamental, and positioning data
 
 ## Documentation
 
@@ -70,6 +71,14 @@ elif rsi(close, 14) < 30:
 # Cross-pair access
 use "GBP/USD" as gbp
 spread = close - gbp.close
+
+# External dataset access (economic calendar, earnings, COT, insider)
+use "econ" as eco
+use "earnings" as er
+nfp  = eco.latest("NFP")     # most recent NFP release at or before this bar
+nvda = er.latest("NVDA")     # most recent NVDA quarterly earnings
+if not is_na(nfp.actual) and nfp.actual < 0:
+    shape(circle, bar_index, close, color=red)
 
 # User-defined functions
 def trend_score(len):

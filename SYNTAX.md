@@ -16,10 +16,10 @@ A Brue script can:
 - **Send live orders to the user's paper account**: `buy`, `sell`, `buy_limit`, `sell_limit`, `buy_stop`, `sell_stop`, `close`
 - **Compute on price**: 143 built-in functions (moving averages, oscillators, trend, volatility, volume, statistics, math, time)
 - **Pull a second instrument** with `use SYMBOL [at TF] [as ALIAS]` and reference it as `alias.close`, `alias.high`, etc.
+- **Query external datasets** with `use "econ"`, `use "earnings"`, `use "cot"`, `use "insider"` and call `.latest(key)` / `.prev(key)` for point-in-time correct field access.
 
 A Brue script cannot:
 - **Render arbitrary continuous series** with `plot()`. The `plot()` call exists, but it only registers chart-native indicators (`ema`, `sma`, `rsi`, `macd`, `bb`, `stoch`, `atr`, `vwap`, `adx`, `cci`, `roc`) on the host's indicator panel. `plot(some_arbitrary_expression)` is a no-op. For arbitrary series, add an indicator from the chart's built-in indicator menu directly.
-- **Fetch data from arbitrary symbols / timeframes / fundamentals** at runtime. Use `use SYMBOL` for cross-pair; the engine pre-fetches that dataset for you.
 - **Fire alerts** to a notification queue. Mark interesting bars with `shape()` instead.
 
 If you came from Pine Script, Brue's `plot()` works the same way as Pine's: bare `ema(close, 20)` is a value, `plot(ema(close, 20))` is what makes the chart show it. The line/box/polyline/alert APIs do not exist; mark bars with `shape()` and `label()` instead.
@@ -37,22 +37,23 @@ If you came from Pine Script, Brue's `plot()` works the same way as Pine's: bare
 7. [Control Flow](#control-flow)
 8. [User-Defined Functions](#user-defined-functions)
 9. [Cross-Pair Access](#cross-pair-access)
-10. [Types and Enums](#types-and-enums)
-11. [Strategy Execution](#strategy-execution)
-12. [Live Trading Verbs](#live-trading-verbs)
-13. [User Inputs](#user-inputs)
-14. [Drawing Primitives](#drawing-primitives)
-15. [Plotting Indicators](#plotting-indicators)
-16. [Colors](#colors)
-17. [Math and Logic](#math-and-logic)
-18. [Time Functions](#time-functions)
-19. [Moving Averages (15)](#moving-averages)
-20. [Oscillators (31)](#oscillators)
-21. [Trend Indicators (15)](#trend-indicators)
-22. [Volatility (16)](#volatility)
-23. [Volume Indicators (14)](#volume-indicators)
-24. [Statistics and Regression (8)](#statistics-and-regression)
-25. [Removed and Unsupported](#removed-and-unsupported)
+10. [External Datasets](#external-datasets)
+11. [Types and Enums](#types-and-enums)
+12. [Strategy Execution](#strategy-execution)
+13. [Live Trading Verbs](#live-trading-verbs)
+14. [User Inputs](#user-inputs)
+15. [Drawing Primitives](#drawing-primitives)
+16. [Plotting Indicators](#plotting-indicators)
+17. [Colors](#colors)
+18. [Math and Logic](#math-and-logic)
+19. [Time Functions](#time-functions)
+20. [Moving Averages (15)](#moving-averages)
+21. [Oscillators (31)](#oscillators)
+22. [Trend Indicators (15)](#trend-indicators)
+23. [Volatility (16)](#volatility)
+24. [Volume Indicators (14)](#volume-indicators)
+25. [Statistics and Regression (8)](#statistics-and-regression)
+26. [Removed and Unsupported](#removed-and-unsupported)
 
 ---
 
@@ -260,6 +261,181 @@ if correlation(close, gbp.close, 30) > 0.6:
 Multiple `use` lines are allowed. Quoted symbols (anything containing `/` or special characters) require `as ALIAS` because `EUR/USD` is not a valid bare identifier.
 
 The host pre-fetches and time-aligns the foreign series (forward-filled to the chart's bar grid) before the script runs, so foreign reads are zero-cost during execution.
+
+---
+
+## External Datasets
+
+Brue ships four curated datasets that carry point-in-time (PIT) correct fundamental and macro data. Declare them with `use "DATASET_NAME" as ALIAS` alongside your OHLCV `use` lines:
+
+```python
+strategy("Gold macro filter")
+use "XAU/USD" as gold          # OHLCV cross-pair (existing feature)
+use "econ" as eco              # economic calendar releases
+use "earnings" as er           # public-company quarterly earnings
+use "cot" as cot_data          # CFTC Commitment of Traders
+use "insider" as ins           # SEC insider + senate trades
+```
+
+**Key rules:**
+- Dataset aliases use `use "name" as alias` (always quoted, `as ALIAS` required).
+- Dataset aliases do **not** support `at TIMEFRAME`. Writing `use "econ" at 1h as eco` is a parse error.
+- Access data via `.latest(key)` and `.prev(key)` — not via `.open`, `.close`, etc.
+- Fields are `na` (null) before the first snapshot for that key in the chart's date range. Test with `is_na(snap.field)`.
+- PIT guarantee: on bar `N` at time `T`, `.latest(key)` returns the most recent snapshot with `release_time <= T`. The script never sees future data.
+
+### `.latest(key)` and `.prev(key)`
+
+```python
+nfp = eco.latest("NFP")       # most recent NFP snapshot at or before this bar
+nfp_prev = eco.prev("NFP")    # second-most-recent NFP snapshot (one release back)
+```
+
+Both return a snapshot object or `na` if fewer snapshots have arrived than required. Access fields directly on the returned object:
+
+```python
+if not is_na(nfp.actual):
+    label(bar_index, high, f"NFP {nfp.actual}", color=green)
+```
+
+`prev()` requires at least two snapshots to have arrived; it returns `na` until the second release.
+
+### Dataset: `"econ"` — Economic Calendar
+
+Covers major macro releases (NFP, CPI, FOMC, PMI, GDP, PPI, retail sales, etc.) with actual, forecast, and previous values.
+
+**Keys:** the indicator nickname, e.g. `"NFP"`, `"CPI"`, `"CORE_CPI"`, `"FOMC_RATE"`, `"ISM_MFG"`, `"GDP"`, `"PCE"`, `"RETAIL_SALES"`, `"PPI"`, `"IJC"`, `"JOLTS"`, `"UMICH"`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `actual` | float \| na | The released value |
+| `forecast` | float \| na | Median analyst consensus before release |
+| `previous` | float \| na | Prior period's actual |
+| `surprise` | float \| na | `actual - forecast` (na if either is missing) |
+| `change` | float \| na | `actual - previous` (na if either is missing) |
+| `severity` | int | 1 = low, 2 = medium, 3 = high impact |
+
+```python
+strategy("NFP momentum")
+use "econ" as eco
+
+nfp = eco.latest("NFP")
+if not is_na(nfp.actual):
+    col = green if nfp.surprise > 0 else red
+    shape(circle, bar_index, close, color=col, size="small")
+```
+
+### Dataset: `"earnings"` — Quarterly Earnings
+
+SEC income-statement filings for publicly traded companies. Returns the most recent **quarterly** report (Q1-Q4) for the symbol. Annual (FY) rows are excluded to avoid same-day timestamp collisions between the quarterly and annual filings.
+
+**Keys:** ticker symbol, e.g. `"NVDA"`, `"AAPL"`, `"MSFT"`, `"XOM"`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `eps` | float \| na | Basic EPS (quarterly) |
+| `eps_diluted` | float \| na | Diluted EPS |
+| `revenue` | float \| na | Total revenue |
+| `net_income` | float \| na | Net income |
+| `ebitda` | float \| na | EBITDA |
+| `gross_margin` | float \| na | Gross profit / revenue (0.0 - 1.0) |
+| `operating_margin` | float \| na | Operating income / revenue |
+| `net_margin` | float \| na | Net income / revenue |
+| `rd_expense` | float \| na | R&D expense |
+| `sga_expense` | float \| na | SG&A expense |
+| `period` | string \| na | Filing period: `"Q1"`, `"Q2"`, `"Q3"`, `"Q4"` |
+
+```python
+strategy("NVDA earnings filter")
+use "earnings" as er
+
+nvda = er.latest("NVDA")
+if not is_na(nvda.eps) and nvda.eps > nvda[1].eps:
+    shape(arrow_up, bar_index, low, color=green, text="EPS beat")
+```
+
+### Dataset: `"cot"` — CFTC Commitment of Traders
+
+Weekly CFTC COT report, released every Friday at 15:30 ET. Covers futures and options combined for major commodities, currencies, and financials.
+
+**Keys:** LSE symbol format, e.g. `"XAU/USD"`, `"GBP/USD"`, `"EUR/USD"`, `"CRUDE/USD"`, `"COFFEE/USD"`, `"COPPER/USD"`, `"US10Y"`.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `net_noncomm` | float \| na | Non-commercial net (longs minus shorts) |
+| `net_comm` | float \| na | Commercial net (longs minus shorts) |
+| `noncomm_long` | float \| na | Non-commercial long contracts |
+| `noncomm_short` | float \| na | Non-commercial short contracts |
+| `pct_noncomm_long` | float \| na | % of open interest held long by non-commercials |
+| `pct_noncomm_short` | float \| na | % of open interest held short by non-commercials |
+| `open_interest` | float \| na | Total open interest |
+| `change_noncomm_long` | float \| na | Week-on-week change in non-commercial longs |
+| `change_noncomm_short` | float \| na | Week-on-week change in non-commercial shorts |
+
+```python
+strategy("Gold COT positioning")
+use "cot" as cot_data
+
+cur = cot_data.latest("XAU/USD")
+prv = cot_data.prev("XAU/USD")
+if not is_na(cur.net_noncomm) and not is_na(prv.net_noncomm):
+    if cur.net_noncomm > prv.net_noncomm:
+        bgcolor(rgba(0, 255, 0, 0.05))
+    elif cur.net_noncomm < prv.net_noncomm:
+        bgcolor(rgba(255, 0, 0, 0.05))
+```
+
+### Dataset: `"insider"` — SEC Insider and Senate Trades
+
+SEC Form 4 insider transactions plus STOCK Act congressional disclosures.
+
+**Keys:** ticker symbol, e.g. `"NVDA"`, `"AAPL"`, `"TSLA"`.
+
+> **Performance note:** The insider table contains millions of rows. Only symbols explicitly referenced in `.latest("SYMBOL")` or `.prev("SYMBOL")` calls are fetched — static analysis scans the script source before execution.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `direction` | string \| na | `"buy"` or `"sell"` |
+| `txn_type` | string \| na | Transaction type code (e.g. `"P"` = purchase, `"S"` = sale) |
+| `shares` | float \| na | Number of shares traded |
+| `price_per_share` | float \| na | Transaction price |
+| `total_value` | float \| na | `shares * price_per_share` |
+
+```python
+strategy("Insider buy signal")
+use "insider" as ins
+
+nvda_trade = ins.latest("NVDA")
+if not is_na(nvda_trade.direction) and nvda_trade.direction == "buy":
+    shape(circle, bar_index, low, color=blue, size="small", text="INS")
+```
+
+### Complete multi-dataset example
+
+```python
+strategy("Macro + COT Gold filter",
+         overlay=true, capital=10000, default_qty=1)
+
+use "XAU/USD" as gold
+use "econ" as eco
+use "cot" as cot_data
+
+nfp       = eco.latest("NFP")
+gold_cot  = cot_data.latest("XAU/USD")
+gold_prev = cot_data.prev("XAU/USD")
+
+# COT positioning improving AND last NFP was negative (risk-off)
+cot_rising = not is_na(gold_cot.net_noncomm) and not is_na(gold_prev.net_noncomm) and
+             gold_cot.net_noncomm > gold_prev.net_noncomm
+nfp_weak   = not is_na(nfp.actual) and nfp.actual < 0
+
+if cot_rising and nfp_weak:
+    entry("long_gold", long)
+    shape(arrow_up, bar_index, low, color=gold, size="large", text="MACRO LONG")
+
+if position.size > 0 and cot_rising == false:
+    exit("cot_exit", from_entry="long_gold")
+```
 
 ---
 
@@ -1020,4 +1196,53 @@ if last_bar:
     t.cell(2, 1, f"{adx_val:.1f}", color=green if adx_val > 25 else gray)
     t.cell(3, 0, "ATR(14)", color=white)
     t.cell(3, 1, f"{atr_val:.4f}", color=white)
+```
+
+### 8. NFP + COT combined macro strategy
+
+```python
+strategy("NFP COT Gold",
+         overlay=true, capital=10000, commission=0.0001, default_qty=1)
+
+use "econ" as eco
+use "cot" as cot_data
+
+nfp_thresh = input(-50, "NFP threshold (entry when below)")
+
+nfp      = eco.latest("NFP")
+cur_cot  = cot_data.latest("XAU/USD")
+prev_cot = cot_data.prev("XAU/USD")
+
+cot_rising = not is_na(cur_cot.net_noncomm) and not is_na(prev_cot.net_noncomm) and
+             cur_cot.net_noncomm > prev_cot.net_noncomm
+nfp_weak   = not is_na(nfp.actual) and nfp.actual < nfp_thresh
+
+if cot_rising and nfp_weak and position.size == 0:
+    entry("long", long)
+    shape(arrow_up, bar_index, low, color=gold, size="large")
+
+if position.size > 0 and not cot_rising:
+    exit("cot_exit", from_entry="long")
+    shape(arrow_down, bar_index, high, color=gray, size="small")
+```
+
+### 9. Earnings beat scanner
+
+```python
+strategy("Earnings beat", overlay=true)
+
+ticker = input("NVDA", "Symbol")
+
+snap      = er.latest(ticker)
+snap_prev = er.prev(ticker)
+
+use "earnings" as er
+
+beat = not is_na(snap.eps) and not is_na(snap_prev.eps) and snap.eps > snap_prev.eps
+miss = not is_na(snap.eps) and not is_na(snap_prev.eps) and snap.eps < snap_prev.eps
+
+if beat:
+    shape(arrow_up,   bar_index, low,  color=green, size="small", text="BEAT")
+if miss:
+    shape(arrow_down, bar_index, high, color=red,   size="small", text="MISS")
 ```
