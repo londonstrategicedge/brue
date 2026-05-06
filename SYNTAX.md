@@ -6,6 +6,76 @@ Brue is the scripting language for London Strategic Edge. It is Python-like, ind
 
 ---
 
+## Behaviour Rules (read before every response)
+
+### Ask before you code — missing critical parameters
+
+Before writing a strategy script, identify what is missing using the rules below, then ask for all missing items in one short message. Do NOT guess defaults. Do NOT generate the script until you have the answers.
+
+**Timeframe — ask only when it affects the result:**
+- MUST ask if the script uses any indicator that depends on bar count: `ema`, `sma`, `rsi`, `atr`, `macd`, `bb`, `adx`, `stoch`, `cci`, `atr`, `supertrend`, `ichimoku`, or any function that takes a period/length argument. A 14-bar ATR on 1m vs 1D are completely different numbers.
+- Do NOT ask if the entry is purely event-driven (NFP release, earnings beat, economic data surprise) AND the SL/TP are fixed pips/points/dollars. In that case timeframe is irrelevant — the event fires on one bar regardless of candle size, and fixed pip stops are price-level math that doesn't depend on bars.
+- When timeframe IS needed, add it as `input_timeframe("1H", "Timeframe")` at the top so the user can change it from the UI, AND add a comment: `# Run this on a [recommended TF] chart`.
+
+**Stop loss — always ask if not specified:**
+- ATR multiple (e.g. 1.5×ATR(14)) — timeframe-dependent, so ask timeframe too
+- Fixed pips/points/dollars (e.g. 20 pips, $2.00) — timeframe-independent
+- Swing high/low — needs a lookback period, ask timeframe
+- None — valid, but confirm explicitly
+
+**Take profit — always ask if not specified:**
+- Fixed R multiple (e.g. 2R = 2× the stop distance)
+- Fixed pips/points/dollars
+- Trailing stop
+- Exit on signal flip
+- None — valid, but confirm explicitly
+
+**Also ask if genuinely ambiguous:**
+- Direction: long only, short only, or both?
+- Entry trigger: if the user's description could mean multiple things
+
+**When NOT to ask anything:** Drawing-only scripts (shapes, labels, tables, hlines) with no `entry()`/`exit()` calls. Just write them.
+
+### Scale-mismatch check — never cross two series on different scales
+
+Before writing `crossover(A, B)` or `crossunder(A, B)`, verify that A and B live on the same numeric scale. If they don't, the cross will literally never happen and the strategy will fire zero trades.
+
+Common scale mismatches to NEVER write:
+- ❌ `crossover(rsi_val, ema_val)` — RSI is 0-100, EMA is a price level (e.g. 5500). Will never cross.
+- ❌ `crossover(rsi_val, close)` — same problem.
+- ❌ `crossover(stoch_val, sma_val)` — Stoch is 0-100, SMA is a price level.
+- ❌ `crossover(macd_line, close)` — MACD is a small number around 0, close is hundreds or thousands.
+
+Correct patterns when the user says "RSI/EMA cross" (ambiguous — ask if unsure):
+- ✅ **RSI vs its own EMA**: `rsi_ema = ema(rsi_val, 9); if crossover(rsi_val, rsi_ema):` — both are 0-100.
+- ✅ **EMA as trend filter alongside RSI**: `if rsi_val < 30 and close > ema_val:` (long mean-reversion only when above 200-EMA trend).
+- ✅ **MACD line vs MACD signal**: same MACD scale.
+
+When the user names two indicators and says "cross", default to interpretation 2 (use one as a filter for the other) and EXPLAIN the choice in your reply, OR ask which they meant. Never silently emit a cross between incompatible scales.
+
+The same rule applies to fixed thresholds: don't write `if rsi_val > 50` and call it a "trend filter" when the user is on a price-level series — that's RSI, fine, but `if close > 50` on gold would always be true.
+
+### Threshold realism — pick numbers that actually fire
+
+When picking entry thresholds (correlation levels, RSI levels, z-score cutoffs, etc.), pick values that match how the indicator actually behaves on the asset, not arbitrary round numbers. Common LoRA mistakes that produce zero trades:
+
+- **Correlation breakdown**: `correlation(close, other.close, N)` is Pearson on raw prices. For trending pairs (FX/equity index) it sits near +1 most of the time. Use `< 0.5` for "breakdown" (not `< 0.6`), and `> 0.95` for "very tight" (not `> 0.8`). For correlation on returns (which Brue does NOT have natively — you'd compute `change(close)`), use `< 0.3` and `> 0.7`.
+- **RSI overbought/oversold**: 70/30 is the textbook default. For mean-reversion on already-ranging assets use 80/20. Anything tighter than 65/35 fires too often.
+- **Z-score**: standard cutoffs are ±2 (rare event) or ±1.5 (frequent event). ±3 is almost never.
+- **ATR-based stops**: 1×ATR is tight (gets stopped often), 2×ATR is room to breathe, 3×ATR is loose. Match to the entry's expected hold time.
+
+When thresholds depend on asset behaviour you don't have data for, ADD a debug output: `t.cell(0, 0, f"corr={corr_val:.2f}", color=white)` so the user can see the live value range and adjust. Better: ask the user "what threshold range have you seen this hit on this asset?"
+
+**Format:** One message, bullet list, concise. Example:
+> Quick questions before I write this:
+> - **Timeframe** — which candle size? (needed because this uses ATR)
+> - **Stop loss** — ATR-based, fixed pips, or something else?
+> - **Take profit** — fixed R, trailing, or exit on flip?
+
+Once the user answers, write the script immediately without asking again.
+
+---
+
 ## What Brue does, and what it does NOT do
 
 Brue is a **strategy + chart-drawing layer**. It is NOT the chart's indicator system.
@@ -512,6 +582,54 @@ exit("scale", from_entry="breakout", qty=1)
 
 Stop and limit are checked against the current bar's high / low. If both trigger on the same bar, stop is assumed to fill first (conservative).
 
+**CRITICAL pattern — stop/limit exit must live in its own block, not inside the entry block.**
+The entry fires once; the exit must run every bar so the engine can check each bar's high/low.
+Use `position.entry_price` (not the entry bar's `close`) for stop/limit math.
+
+```python
+# CORRECT — entry and exit in separate blocks
+strategy("Bracketed long")
+atr_val = atr(14)
+
+if rsi(close, 14) < 30 and position.size == 0:
+    entry("long", long)
+
+if position.size > 0:
+    exit("bracket", from_entry="long",
+         stop=position.entry_price - atr_val,
+         limit=position.entry_price + 2 * atr_val)
+
+# WRONG — exit inside the entry block only runs on the signal bar, then never again
+# if rsi(close, 14) < 30 and position.size == 0:
+#     entry("long", long)
+#     exit("bracket", ...)   ← this fires once and is forgotten
+```
+
+For both long and short with symmetric stops:
+
+```python
+strategy("Long/Short Bracketed")
+fast = ema(close, 9)
+slow = ema(close, 21)
+atr_val = atr(14)
+
+if crossover(fast, slow) and position.size == 0:
+    entry("long", long)
+
+if crossunder(fast, slow) and position.size == 0:
+    entry("short", short)
+
+if position.size > 0:
+    exit("long_bracket", from_entry="long",
+         stop=position.entry_price - atr_val,
+         limit=position.entry_price + 2 * atr_val)
+
+if position.size < 0:
+    exit("short_bracket", from_entry="short",
+         stop=position.entry_price + atr_val,
+         limit=position.entry_price - 2 * atr_val)
+```
+
 ### close_all()
 
 Flatten everything at the current close. Runs at the end of the backtest automatically.
@@ -828,19 +946,47 @@ year(time)         # 2026
 month(time)        # 1-12
 dayofmonth(time)   # 1-31
 dayofweek(time)    # 0=Sun, 1=Mon, ... 6=Sat
-hour(time)         # 0-23
+hour(time)         # 0-23 UTC
 minute(time)       # 0-59
 second(time)       # 0-59
 ```
 
-Example: London session is 08:00-16:00 UTC, Mon-Fri.
+### in_session()
+
+Returns `true` if the current bar falls inside the given trading session. Handles DST automatically via IANA timezones.
+
+**Named sessions** (DST-aware, Mon-Fri only):
 
 ```python
-in_london = hour(time) >= 8 and hour(time) < 16
-weekday   = dayofweek(time) >= 1 and dayofweek(time) <= 5
-if in_london and weekday:
-    bgcolor(rgba(0, 100, 255, 0.04))
+if in_session("london"):    # 08:00-16:30 Europe/London
+if in_session("new_york"):  # 09:30-16:00 America/New_York
+if in_session("tokyo"):     # 09:00-15:30 Asia/Tokyo
+if in_session("sydney"):    # 10:00-16:00 Australia/Sydney
+if in_session("frankfurt"): # 09:00-17:30 Europe/Berlin
 ```
+
+**Custom sessions** — `"HH:MM-HH:MM"` or `"HHMM-HHMM"` with a `tz=` IANA timezone kwarg. Runs all 7 days unless you add your own day filter.
+
+```python
+# All bars in the given window, any day
+if in_session("08:00-17:00", tz="Europe/London"):
+    entry("buy", long)
+
+# Overnight session (crosses midnight) — works correctly
+if in_session("22:00-05:00", tz="America/New_York"):
+    bgcolor(rgba(255, 200, 0, 0.05))
+
+# Pair with input_session() for a user-configurable window
+ses = input_session("0930-1600", "Session filter")
+if in_session(ses, tz="America/New_York"):
+    entry("buy", long)
+
+# Combine named session with a day filter
+if in_session("london") and dayofweek(time) != 5:  # Mon-Thu only
+    entry("buy", long)
+```
+
+All time getters return UTC values. Use `in_session()` whenever you need local-clock session logic.
 
 ---
 
