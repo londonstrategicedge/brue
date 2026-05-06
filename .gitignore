@@ -1,0 +1,5 @@
+# LSE-specific server-side runner — contains DB credentials, never push.
+server/
+node_modules/
+*.log
+.DS_Store
