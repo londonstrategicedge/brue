@@ -1,5 +1,38 @@
 # Brue Changelog
 
+## v0.9 (2026-05-07)
+
+Multi-timeframe foreign access lifts. `use SYMBOL at TIMEFRAME as alias` now
+actually fetches at the requested timeframe and forward-fills onto the
+primary bar grid. Same-TF behaviour is unchanged. Pine Script's
+`request.security(..., lookahead=barmerge.lookahead_off)` is the equivalent.
+
+```python
+strategy("MTF: 1H trend, 5m entry",
+         symbol="NVDA", timeframe="5m")
+use NVDA at 1H as h1
+use NVDA at 1D as d1
+
+if h1.close > ema(h1.close, 50) and d1.close > ema(d1.close, 200) \
+   and rsi(close, 14) < 40 and position.size == 0:
+    entry("L", long)
+```
+
+**Implementation**
+
+- buildUseData routes through the DataProvider abstraction (Step 3 of
+  v0.8) for both same-TF (1m fetch) and cross-TF (TF-bucketed fetch) paths.
+- Dedupe key is now (canonical, timeframe), so two scripts using SPY at
+  1H and 1D share their respective fetches but don't collide.
+- The forward-fill is the existing as-of-join — once a foreign bar at
+  time F is seen, it stays in `last` until a later one arrives. Higher-TF
+  foreigns naturally produce stairs across the primary grid.
+
+**Limitation removed**
+
+The v0.8 `use SYMBOL at TIMEFRAME` limitation note is gone. Cross-TF
+foreign access works.
+
 ## v0.8 (2026-05-07)
 
 `strategy()` accepts `symbol` and `timeframe`, and the kwarg list is now closed.

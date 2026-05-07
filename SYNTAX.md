@@ -341,7 +341,35 @@ Multiple `use` lines are allowed. Quoted symbols (anything containing `/` or spe
 
 The host pre-fetches and time-aligns the foreign series (forward-filled to the chart's bar grid) before the script runs, so foreign reads are zero-cost during execution.
 
-> **Limitation:** `use SYMBOL at TIMEFRAME as alias` is parsed but the `at TIMEFRAME` clause is currently honoured only when the timeframe matches the chart's. Cross-timeframe foreign access (e.g. `use SPY at 1D` while running on a 1H chart) reads as `na` for every bar today; the multi-timeframe data layer is on the roadmap. Until then, write strategies that need both timeframes by running the script on the higher timeframe and using `use` for the lower-TF symbol, not the reverse.
+### Multi-timeframe foreign access
+
+`use SYMBOL at TIMEFRAME as alias` fetches the foreign symbol at the requested timeframe and forward-fills it onto the script's primary bar grid. The forward-fill is the standard MTF lookback discipline: between higher-TF bar closes, the foreign value stays at its most recent close — no lookahead. When a new higher-TF bar closes, the value updates on the next primary bar. Pine Script's `request.security(..., lookahead=barmerge.lookahead_off)` is the same shape.
+
+```python
+strategy("MTF: 1H trend, 5m entry",
+         symbol="NVDA", timeframe="5m")
+use NVDA at 1H as h1
+use NVDA at 1D as d1     # broader regime
+
+trend_up_1h    = h1.close > ema(h1.close, 50)
+trend_up_daily = d1.close > ema(d1.close, 200)
+pullback_5m    = close < open and rsi(close, 14) < 40
+
+if trend_up_1h and trend_up_daily and pullback_5m and position.size == 0:
+    entry("L", long)
+```
+
+Cross-pair plus cross-TF is the same syntax — three foreign series at three different timeframes, all forward-filled and indexed against the primary bar grid:
+
+```python
+strategy("Pair trade with HTF gate",
+         symbol="EUR/USD", timeframe="15m")
+use "GBP/USD" at 4H as gbp_4h
+use SPY      at 1D as spy_d1
+use DXY      as dxy              # same-TF as primary
+```
+
+Two `use` lines on the same symbol but different timeframes each get their own fetch (and their own alias). Two `use` lines on the same `(symbol, timeframe)` share one fetch; the dedupe key is the pair, not the alias.
 
 ---
 
