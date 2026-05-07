@@ -12,10 +12,11 @@ Brue is the scripting language for London Strategic Edge. It is Python-like, ind
 
 Before writing a strategy script, identify what is missing using the rules below, then ask for all missing items in one short message. Do NOT guess defaults. Do NOT generate the script until you have the answers.
 
-**Timeframe — ask only when it affects the result:**
-- MUST ask if the script uses any indicator that depends on bar count: `ema`, `sma`, `rsi`, `atr`, `macd`, `bb`, `adx`, `stoch`, `cci`, `atr`, `supertrend`, `ichimoku`, or any function that takes a period/length argument. A 14-bar ATR on 1m vs 1D are completely different numbers.
-- Do NOT ask if the entry is purely event-driven (NFP release, earnings beat, economic data surprise) AND the SL/TP are fixed pips/points/dollars. In that case timeframe is irrelevant — the event fires on one bar regardless of candle size, and fixed pip stops are price-level math that doesn't depend on bars.
-- When timeframe IS needed, add it as `input_timeframe("1H", "Timeframe")` at the top so the user can change it from the UI, AND add a comment: `# Run this on a [recommended TF] chart`.
+**Symbol and timeframe — declare them on `strategy()`, always:**
+- Every strategy that uses any bar-count-dependent indicator (`ema`, `sma`, `rsi`, `atr`, `macd`, `bb`, `adx`, `stoch`, `cci`, `supertrend`, `ichimoku`, or any function that takes a period/length argument) MUST declare both `symbol="..."` and `timeframe="..."` on `strategy(...)`. A 14-bar ATR on 1m vs 1D are completely different numbers; a strategy without an explicit timeframe is unreproducible.
+- Pure event-driven strategies (NFP release, earnings beat, economic data surprise) with fixed pip/point/dollar stops are the one exception — timeframe is irrelevant because the event fires on one bar regardless of candle size.
+- Do NOT use `input_timeframe(...)` to set the script's timeframe — `input_timeframe` is a UI control that returns a string but does not bind data. Only `strategy(timeframe="...")` actually drives bar fetching.
+- When the user names a symbol or timeframe in the prompt, use that. When they say "this symbol" or "the chart's timeframe", default to the chart's currently loaded values, but still write them explicitly so the script is portable.
 
 **Stop loss — always ask if not specified:**
 - ATR multiple (e.g. 1.5×ATR(14)) — timeframe-dependent, so ask timeframe too
@@ -132,7 +133,9 @@ If you came from Pine Script, Brue's `plot()` works the same way as Pine's: bare
 Every script begins with one declaration and only one declaration: `strategy(...)`. There is no `indicator()` keyword.
 
 ```python
-strategy("My Script", overlay=true)
+strategy("My Script", overlay=true,
+         symbol="NVDA", timeframe="1H",
+         capital=10000)
 ```
 
 **`strategy()` parameters:**
@@ -141,13 +144,19 @@ strategy("My Script", overlay=true)
 |-----------|------|---------|-------------|
 | title | string (required, positional) |, | Name shown in the legend |
 | `overlay` | bool | `true` | `true` draws on the price chart, `false` opens a separate panel |
+| `symbol` | string literal | inherited from chart | Pin the script to a specific symbol so backtests are reproducible across charts. When set, the runtime fetches bars for this symbol regardless of which pair the chart is showing. When omitted, the chart's loaded symbol drives data |
+| `timeframe` | string literal | inherited from chart | Pin the script to a specific bar size (`"1m"`, `"5m"`, `"15m"`, `"1H"`, `"4H"`, `"1D"`, `"1W"`). Required when the script uses any bar-count-dependent indicator (`ema`, `sma`, `rsi`, `atr`, `macd`, `bb`, `adx`, `stoch`, `cci`, `supertrend`, `ichimoku`) — a 14-bar ATR on 1m vs 1D are completely different numbers |
 | `capital` / `initial_capital` | number | `10000` | Backtest starting equity |
 | `commission` | number | `0` | Commission rate |
 | `commission_type` | string | `"percent"` | `"percent"` or `"fixed"` |
 | `slippage` | number | `0` | Slippage in price units |
 | `pyramiding` | number | `0` | Max additional same-direction entries |
 | `default_qty` | number | `1` | Default order size |
+| `default_qty_type` | string | `"contracts"` | `"contracts"`, `"cash"`, or `"percent_of_equity"` |
+| `precision` | number | inferred | Decimal places to display in P&L summaries |
 | `currency` | string | `"USD"` | Account currency label |
+
+**Closed kwarg set.** Anything not in the table above is rejected at parse time with a "did you mean..." suggestion. Typos like `comission=0.001` are now hard errors instead of silently dropped. The closed set is the contract; new kwargs require a language change, not a runtime guess.
 
 A strategy script that does not call `entry()` / `exit()` / `close_all()` simply behaves as a "drawings only" script. The backtest engine spins up but stays idle. There is no separate "indicator mode".
 
@@ -315,7 +324,7 @@ def my_rsi(src, len=14):
 Bring a second instrument into the script with `use`. The line lives **between the `strategy(...)` declaration and the first executable statement**, not inside the body.
 
 ```python
-strategy("EUR vs GBP")
+strategy("EUR vs GBP", symbol="EUR/USD", timeframe="1H")
 use "GBP/USD" as gbp           # quoted symbol, custom alias
 use SPY at 1D as bench         # different timeframe, custom alias
 use AAPL                       # alias defaults to AAPL
@@ -331,6 +340,8 @@ if correlation(close, gbp.close, 30) > 0.6:
 Multiple `use` lines are allowed. Quoted symbols (anything containing `/` or special characters) require `as ALIAS` because `EUR/USD` is not a valid bare identifier.
 
 The host pre-fetches and time-aligns the foreign series (forward-filled to the chart's bar grid) before the script runs, so foreign reads are zero-cost during execution.
+
+> **Limitation:** `use SYMBOL at TIMEFRAME as alias` is parsed but the `at TIMEFRAME` clause is currently honoured only when the timeframe matches the chart's. Cross-timeframe foreign access (e.g. `use SPY at 1D` while running on a 1H chart) reads as `na` for every bar today; the multi-timeframe data layer is on the roadmap. Until then, write strategies that need both timeframes by running the script on the higher timeframe and using `use` for the lower-TF symbol, not the reverse.
 
 ---
 

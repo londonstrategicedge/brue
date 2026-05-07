@@ -1,5 +1,48 @@
 # Brue Changelog
 
+## v0.8 (2026-05-07)
+
+`strategy()` accepts `symbol` and `timeframe`, and the kwarg list is now closed.
+
+**Added**
+
+- `strategy("X", symbol="NVDA", timeframe="1H")` declares the data context
+  for the script. The runtime resolves bars from the declared `(symbol,
+  timeframe)` instead of inheriting from whatever pair the chart happens to
+  be loaded on. Both kwargs must be string literals (not expressions) so the
+  controller can read them statically before fetching bars. Both are optional
+  for back-compat — when omitted, the chart's loaded symbol/timeframe still
+  drive the data feed.
+- A 14-bar ATR on a 1m chart is a different number from a 14-bar ATR on a 1D
+  chart. Strategies that use any bar-count-dependent indicator (`ema`, `sma`,
+  `rsi`, `atr`, `macd`, `bb`, `adx`, `stoch`, `cci`, `supertrend`, `ichimoku`)
+  should now declare `timeframe=` so backtests are reproducible regardless of
+  what's loaded in the chart.
+
+**Changed**
+
+- `strategy()` kwargs are now validated against a closed set:
+  `overlay`, `precision`, `capital`, `initial_capital`, `commission`,
+  `commission_type`, `slippage`, `pyramiding`, `default_qty`,
+  `default_qty_type`, `currency`, `symbol`, `timeframe`.
+  Anything else is rejected at parse time with a Levenshtein "did you mean…"
+  suggestion. The previous behaviour silently swallowed any unknown kwarg —
+  `comission=0.001` (typo) shipped to production scripts where commission
+  was effectively zero. This is now a hard error.
+
+**Deprecated**
+
+- `input_timeframe(...)` for the script's own timeframe. The function still
+  exists as a UI input control but does not bind data — only
+  `strategy(timeframe="...")` actually drives bar fetching. Existing scripts
+  using `input_timeframe` continue to work, the value just isn't consumed.
+
+**Known limitation**
+
+- `use SYMBOL at TIMEFRAME as alias` is parsed but the `at TIMEFRAME` clause
+  reads as `na` for every bar when the timeframe differs from the chart's.
+  Multi-timeframe foreign access is on the roadmap.
+
 ## v0.7 (2026-05-04)
 
 `plot()` is back, with Pine semantics.
