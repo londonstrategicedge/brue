@@ -371,6 +371,44 @@ use DXY      as dxy              # same-TF as primary
 
 Two `use` lines on the same symbol but different timeframes each get their own fetch (and their own alias). Two `use` lines on the same `(symbol, timeframe)` share one fetch; the dedupe key is the pair, not the alias.
 
+#### Working example: "Sell when 1H bullish AND 5m bearish"
+
+The classic "higher TF context, lower TF trigger" pattern:
+
+```python
+strategy("Sell when 1H bullish AND 5m bearish",
+         symbol="NVDA", timeframe="5m")
+use NVDA at 1H as h1
+
+# h1.close updates only when a new 1H bar closes; holds in between.
+hourly_bullish   = h1.close > h1.open and h1.close > h1.close[1]
+five_min_bearish = close < open and close < close[1]
+
+if hourly_bullish and five_min_bearish and position.size == 0:
+    entry("S", short)
+    shape(arrow_down, location=above_bar, color=red, size="small")
+```
+
+`h1.close > h1.close[1]` only evaluates true at the *moment* a new 1H bar closes higher than its predecessor — between 1H closes, both sides forward-fill to the same value, so the comparison is false. That's intentional: the MTF lookback gives you "last completed higher-TF state" without lookahead.
+
+#### Verifying the wire
+
+If your strategy fires zero trades and you want to confirm `alias.close` is populated rather than reading as `na`, drop in a debug script:
+
+```python
+strategy("h1 debug", symbol="NVDA", timeframe="5m")
+use NVDA at 1H as h1
+
+if not is_na(h1.close):
+    label(str(round(h1.close, 2)), location=above_bar, color=blue, size="tiny")
+```
+
+Labels with real numbers ("207.34", "208.10") confirm MTF is working; no labels mean the foreign fetch returned no data for the script's time window.
+
+#### Bar-count expectations
+
+A 24/5 instrument (FX, gold, indices) and a regular-session equity over the same calendar window return very different bar counts. NVDA at 5m over 35 days yields ~2000 bars (US market hours only); XAU/USD at 5m over the same 35 days yields ~10000 (24-hour weekday trading). Don't read "fewer bars" as a fetch failure — check the symbol's actual trading hours.
+
 ---
 
 ## External Datasets

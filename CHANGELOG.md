@@ -1,5 +1,49 @@
 # Brue Changelog
 
+## v0.9.1 (2026-05-08)
+
+Patch release. v0.9 shipped the language semantics for `use SYMBOL at TF
+as alias` and the editor's `strategy(symbol=, timeframe=)` binding, but
+the production data path had five wiring bugs that made every fetch
+return empty. Same-day patch fixes the entire chain end-to-end.
+
+**Fixed (production data wiring)**
+
+- PostgRESTDataProvider's base URL was `/brue` subpath; corrected to
+  the bare PostgREST root. Every fetch was 404ing silently and the
+  fallback to chart bars was masking the real failure.
+- Symbol -> table resolution now reads `x_pricecache` (the public-
+  facing view of `x_op.candle_table`) instead of using a hardcoded
+  `candles_<x>` formula. US equities live under `d_candles_*`, not
+  `candles_*` — without this lookup, NVDA / AAPL / TSLA / 4000+ stocks
+  were unreachable.
+- `BarData.time` is unix milliseconds throughout (matches the type
+  comment, `ProCandlestickChart`'s `Date.getTime()`, and the runtime's
+  `tsMs` in_session math). resolveBars and useForeignBars no longer
+  multiply chartBars.time by 1000 — that produced year-57805 ISO
+  strings PostgREST rejected. PostgRESTDataProvider also returns
+  `time` in ms (was returning seconds, breaking the secondary
+  foreign-bar fetch when its own output was fed back as the primary
+  time grid).
+- The editor's Run path now fetches foreign-symbol data via
+  `buildUseData` for any non-dataset `use` declarations on the AST.
+  Previously `useHeadlessBrue` did this but `BrueScriptEditor.handleRun`
+  bypassed it, so MTF aliases like `h1.close` always read as `na` in
+  the editor's Output panel even when the chart-side render path
+  worked.
+
+**Result**: the worked example in SYNTAX.md (`use NVDA at 1H as h1` on
+a NVDA 5m primary) now fires real trades end-to-end. Verified in the
+editor's Output panel: `bound: NVDA @ 5m (2000 bars, declared)`,
+followed by labels showing the actual forward-filled 1H NVDA close
+on every 5m bar.
+
+**Lesson logged for future contributors:** when shipping a new data
+provider, run one live probe against the production endpoint with
+real chart bars before declaring done. The contract tests covered
+behaviour through a Fixture provider three different ways and
+production was still 400ing on every call.
+
 ## v0.9 (2026-05-07)
 
 Multi-timeframe foreign access lifts. `use SYMBOL at TIMEFRAME as alias` now
