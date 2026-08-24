@@ -1,0 +1,3 @@
+# member assignment on a plain number must fail.
+x = 5
+x.top = 1

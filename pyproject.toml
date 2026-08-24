@@ -1,0 +1,53 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brue-language"
+version = "0.0.1"
+description = "Brue: the trade-entry language. buy/sell/close scripts that run identically in a historical run and live through Brue Connect."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [
+    { name = "London Strategic Edge", email = "support@londonstrategicedge.com" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+# The bare "brue" name on PyPI is taken, so the distribution is brue-language
+# while the import stays brue. Pure standard library; tzdata only on Windows
+# for the session/time functions.
+dependencies = ["tzdata; sys_platform == 'win32'"]
+
+[project.scripts]
+brue = "brue.cli:main"
+
+[project.urls]
+Homepage = "https://londonstrategicedge.com"
+
+[tool.hatch.build.targets.wheel]
+packages = ["brue"]
+
+[tool.hatch.build.targets.sdist]
+# Explicit allowlist: the engine, its docs, and the conformance suite. Repo
+# housekeeping and scratch output stay out of the release.
+include = [
+  "brue/",
+  "conformance/run_all_py.sh",
+  "conformance/v2/",
+  "ARCHITECTURE.md",
+  "SYNTAX.md",
+  "README.md",
+  "LICENSE",
+  "pyproject.toml",
+]
+exclude = [
+  "conformance/v2/**/out/**",
+]

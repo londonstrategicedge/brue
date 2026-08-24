@@ -1,0 +1,21 @@
+persist n = 0
+n += 1
+m = { "alpha": 1.5, beta: 2.5, "gamma": EURUSD.h1.close }
+g = m.get("alpha")
+m.put("delta", 4.5)
+m.set("alpha", 10.5)
+has = m.contains("beta")
+has2 = m.has("zzz")
+m.remove("gamma")
+ks = m.keys()
+vs = m.values()
+sz = m.size
+sz2 = m.size()
+direct = m.beta
+m["bracket"] = 7.5
+br = m["bracket"]
+m.dotset = 3.25
+if (n - 1) % 9 == 0:
+    log(str(g)+"|"+str(has)+"|"+str(has2)+"|"+str(sz)+"|"+str(sz2))
+    log(ks.join(",")+"|"+vs.join(","))
+    log(str(direct)+"|"+str(br)+"|"+str(m.dotset))

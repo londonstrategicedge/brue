@@ -1,0 +1,17 @@
+persist n = 0
+n += 1
+prev = EURUSD.h1.close[1]
+old = EURUSD.h1.close[10]
+oob = EURUSD.h1.close[100000]
+neg_test = is_na(EURUSD.h1.close[100000])
+comp = EURUSD.h1.close - EURUSD.h1.open
+comp_hist = comp[3]
+ser = sma(EURUSD.h1.close, 5)
+ser_hist = ser[2]
+call_hist = ema(EURUSD.h1.close, 5)[4]
+bi = n - 1
+bi_hist = bi[2]
+if (n - 1) % 7 == 0:
+    log(str(prev)+"|"+str(old)+"|"+str(oob)+"|"+str(neg_test))
+    log(str(comp)+"|"+str(comp_hist)+"|"+str(ser)+"|"+str(ser_hist))
+    log(str(call_hist)+"|"+str(bi_hist))

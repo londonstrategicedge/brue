@@ -1,0 +1,25 @@
+{
+ "snapshots": [
+  {
+   "timestamp": 1700003600000,
+   "key": "GOLD",
+   "net_long": 198432,
+   "net_short": 61220,
+   "open_interest": 512000
+  },
+  {
+   "timestamp": 1700608400000,
+   "key": "GOLD",
+   "net_long": 203115,
+   "net_short": 58900,
+   "open_interest": 524400
+  },
+  {
+   "timestamp": 1704000000000,
+   "key": "GOLD",
+   "net_long": 214800,
+   "net_short": 55010,
+   "open_interest": 538800
+  }
+ ]
+}

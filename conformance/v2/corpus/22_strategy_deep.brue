@@ -1,0 +1,18 @@
+# run: --capital 25000 --commission 0.5 --slippage 0.01
+fast = ema(EURUSD.h1.close, 5)
+slow = ema(EURUSD.h1.close, 15)
+r = rsi(EURUSD.h1.close, 7)
+persist n = 0
+n += 1
+if crossover(fast, slow) and (position.size < 0 or strategy.open_trades < 3):
+    buy("EURUSD", 3, sl=EURUSD.h1.close - 0.3, tp=EURUSD.h1.close + 0.5)
+if r > 70 and (position.size > 0 or strategy.open_trades < 3):
+    sell("EURUSD", 1)
+if crossunder(fast, slow) and position.size > 0:
+    close("EURUSD")
+if n == 151:
+    close("EURUSD")
+if (n - 1) % 25 == 0:
+    log(str(position.size)+"|"+str(position.avg_price)+"|"+str(position.unrealized_pnl))
+    log(str(strategy.equity)+"|"+str(strategy.net_profit)+"|"+str(strategy.open_trades)+"|"+str(strategy.closed_trades))
+    log(str(strategy.win_rate)+"|"+str(strategy.max_drawdown)+"|"+str(strategy.commission)+"|"+str(strategy.initial_capital))

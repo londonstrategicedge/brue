@@ -1,0 +1,17 @@
+def double_it(x):
+    return x * 2
+def my_ma(src, length=5):
+    return ema(src, length)
+def risk(price, pct=2):
+    stop = price * (1 - pct / 100)
+    return stop
+persist n = 0
+n += 1
+d = double_it(EURUSD.h1.close)
+m1 = my_ma(EURUSD.h1.close)
+m2 = my_ma(EURUSD.h1.close, 12)
+m3 = my_ma(EURUSD.h1.hl2, 7)
+r = risk(EURUSD.h1.close)
+r2 = risk(EURUSD.h1.close, 5)
+if (n - 1) % 9 == 0:
+    log(str(d)+"|"+str(m1)+"|"+str(m2)+"|"+str(m3)+"|"+str(r)+"|"+str(r2))

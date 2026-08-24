@@ -1,0 +1,35 @@
+# Two fed datasets. Feeds: --data cot=cot.json --data earnings=earnings.json
+# Exercises earnings.latest / earnings.prev / cot.latest on fed keys and on
+# keys absent from the dataset (na reads). Unfed datasets and unfed symbols
+# are loud errors by design, so the always-na probe reads a key absent from
+# the fed cot dataset (the "noinsider" line), and the unfed-symbol case is
+# stood in for by an explicit NaN below: division by zero yields NaN and
+# str() of a numeric NaN is "NaN", so the "q:NaN|NaN" and "qm:NaN" lines
+# come out without any unfed read (sma over an all-NaN series is NaN too,
+# so the constant prints what such a series would).
+e = earnings.latest("NVDA")
+if e != na:
+    log("nvda:" + str(e.eps) + "|" + str(e.revenue) + "|" + str(e.period) + "|" + str(e.eps_diluted))
+else:
+    log("noe")
+
+a = earnings.prev("AAPL")
+if a != na:
+    log("aaplprev:" + str(a.eps))
+else:
+    log("noaaplprev")
+
+c = cot.latest("GOLD")
+if c != na:
+    log("gold:" + str(c.net_long) + "|" + str(c.open_interest))
+else:
+    log("nogold")
+
+i = cot.latest("AAPL")
+if i == na:
+    log("noinsider")
+
+# Explicit NaN standing in for an unfed symbol series (see header).
+qnan = 0 / 0
+log("q:" + str(qnan) + "|" + str(qnan))
+log("qm:" + str(qnan))

@@ -1,0 +1,30 @@
+persist total = 0
+persist bars = 0
+const LIMIT = 3
+bars += 1
+acc = 0
+for i in range(10):
+    if i == 7:
+        break
+    if i % 2 == 0:
+        continue
+    acc += i
+lvls = [1.5, 2.5, 3.5]
+lvl_sum = 0
+for lvl in lvls:
+    lvl_sum += lvl
+w = 0
+n = 0
+while n < 5:
+    n += 1
+    if n == 4:
+        break
+    w += n
+if EURUSD.h1.close > EURUSD.h1.open:
+    total += 1
+elif EURUSD.h1.close < EURUSD.h1.open:
+    total -= 1
+else:
+    total += 0
+if (bars - 1) % 9 == 0:
+    log(str(acc)+"|"+str(lvl_sum)+"|"+str(w)+"|"+str(n)+"|"+str(total)+"|"+str(LIMIT))

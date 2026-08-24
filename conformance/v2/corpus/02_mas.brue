@@ -1,0 +1,21 @@
+a = sma(EURUSD.h1.close, 20)
+b = ema(EURUSD.h1.close, 12)
+c = wma(EURUSD.h1.close, 14)
+d = hma(EURUSD.h1.close, 16)
+e = dema(EURUSD.h1.close, 20)
+f = tema(EURUSD.h1.close, 20)
+g = smma(EURUSD.h1.close, 20)
+h = vwma(EURUSD.h1.close, 20)
+i = vwap()
+j = alma(EURUSD.h1.close, 9, 0.85, 6)
+k = kama(EURUSD.h1.close, 10, 2, 30)
+l = zlema(EURUSD.h1.close, 21)
+m = t3(EURUSD.h1.close, 5, 0.7)
+n = lsma(EURUSD.h1.close, 25)
+o = mcginley(EURUSD.h1.close, 14)
+persist cnt = 0
+cnt += 1
+if (cnt - 1) % 17 == 0:
+    log(str(a)+"|"+str(b)+"|"+str(c)+"|"+str(d)+"|"+str(e))
+    log(str(f)+"|"+str(g)+"|"+str(h)+"|"+str(i)+"|"+str(j))
+    log(str(k)+"|"+str(l)+"|"+str(m)+"|"+str(n)+"|"+str(o))

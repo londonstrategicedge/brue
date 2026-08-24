@@ -1,0 +1,2 @@
+if EURUSD.h1.close > EURUSD.h1.open
+    log("x")

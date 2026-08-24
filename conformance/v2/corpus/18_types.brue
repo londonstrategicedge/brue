@@ -1,0 +1,19 @@
+type Zone:
+    top: float = 0.0
+    bottom: float = 0.0
+    label_text: string = "zone"
+enum Signal:
+    buy = "Buy Signal"
+    sell
+    neutral
+persist n = 0
+n += 1
+z = Zone.new(101.5, 99.5)
+z.top = EURUSD.h1.high
+z2 = Zone.new()
+sig = Signal.buy
+sig2 = Signal.sell
+eq = sig == "Buy Signal"
+if (n - 1) % 9 == 0:
+    log(str(z.top)+"|"+str(z.bottom)+"|"+z.label_text)
+    log(str(z2.top)+"|"+sig+"|"+sig2+"|"+str(eq))

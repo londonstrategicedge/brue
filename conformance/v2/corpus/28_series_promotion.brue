@@ -1,0 +1,17 @@
+# Series promotion: an indicator returned through a def, a series assigned inside an if, series + 0; close("EURUSD") is the no-op order that binds the primary bars; sampled every 9th bar via a persist bar counter
+close("EURUSD")
+persist n = -1
+n += 1
+def wrapped(src):
+    inner = ema(src, 7)
+    return inner
+x = wrapped(EURUSD.h1.close)
+y = wrapped(EURUSD.h1.hl2)
+cond_series = 0
+if n == 0:
+    cond_series = sma(EURUSD.h1.close, 4)
+z = cond_series
+r1 = rsi(EURUSD.h1.close, 14)
+r1 = r1 + 0
+if n % 9 == 0:
+    log(str(x)+"|"+str(y)+"|"+str(z)+"|"+str(r1))

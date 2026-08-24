@@ -1,0 +1,37 @@
+# Multi-feed reads. Feeds: --data SPY=SPY.csv --data BTCUSD=BTCUSD.csv
+# close("EURUSD") is a flat no-op whose only job is naming the traded market,
+# because the primary bars bind to the market the orders name; without it
+# EURUSD.h1.close would be an unfed-symbol error.
+close("EURUSD")
+
+log(str(SPY.h2.close) + "|" + str(SPY.h2.open) + "|" + str(SPY.h2.high) + "|" + str(SPY.h2.low) + "|" + str(SPY.h2.volume))
+log(str(SPY.h2.hl2) + "|" + str(SPY.h2.hlc3) + "|" + str(SPY.h2.ohlc4))
+log(str(BTCUSD.m90.close) + "|" + str(BTCUSD.m90.close[3]) + "|" + str(BTCUSD.m90.volume))
+
+# Hand-rolled incremental running-sum sma over the SPY feed: sum += x[i];
+# if i >= period: sum -= x[i-period]; NaN while i < period-1. SPY's feed
+# starts 3 primary bars late, so x[0..2] are NaN, the running sum turns NaN
+# on bar 0 and never recovers (NaN survives both the add and the subtract),
+# so m is NaN on every bar. That is the point: the sma builtin skips leading
+# NaN and recovers once the window is clean, and this block exercises the
+# opposite, NaN-propagating arithmetic written out explicitly (0 / 0 is the
+# NaN literal). mn increments at the top, so mn - 1 is the 0-based bar
+# index i.
+persist msum = 0.0
+persist mn = 0
+mn += 1
+msum += SPY.h2.close
+if mn - 1 >= 5:
+    msum -= SPY.h2.close[5]
+if mn - 1 < 4:
+    m = 0 / 0
+else:
+    m = msum / 5
+e = ema(BTCUSD.m90.close, 9)
+c = correlation(EURUSD.h1.close, SPY.h2.close, 10)
+log(str(m) + "|" + str(e) + "|" + str(c))
+
+# The cross builtins over fed series are exercised as computed values only;
+# nothing is drawn or logged from them.
+up = crossover(EURUSD.h1.close, SPY.h2.close)
+down = crossunder(BTCUSD.m90.close, e)

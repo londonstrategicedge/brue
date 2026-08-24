@@ -1,0 +1,15 @@
+r = rsi(EURUSD.h1.close, 14)
+ml, ms, mh = macd(EURUSD.h1.close, 12, 26, 9)
+st = stoch(EURUSD.h1.close, EURUSD.h1.high, EURUSD.h1.low, 14)
+c = cci(EURUSD.h1.hlc3, 20)
+m = mfi(14)
+w = williams_r(14)
+ro = roc(EURUSD.h1.close, 10)
+mo = mom(EURUSD.h1.close, 10)
+awesome = ao()
+persist n = 0
+n += 1
+if (n - 1) % 11 == 0:
+    log(str(r)+"|"+str(ml)+"|"+str(ms)+"|"+str(mh))
+    log(str(st)+"|"+str(c)+"|"+str(m)+"|"+str(w))
+    log(str(ro)+"|"+str(mo)+"|"+str(awesome))

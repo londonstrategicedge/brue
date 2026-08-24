@@ -1,0 +1,40 @@
+{
+ "snapshots": [
+  {
+   "timestamp": 1699998000000,
+   "key": "NVDA",
+   "period": "Q3",
+   "eps": 3.71,
+   "eps_diluted": 3.67,
+   "revenue": 18120000000,
+   "net_income": 9243000000
+  },
+  {
+   "timestamp": 1700800000000,
+   "key": "NVDA",
+   "period": "Q4",
+   "eps": 4.02,
+   "eps_diluted": 3.98,
+   "revenue": 20410000000,
+   "net_income": 11230000000
+  },
+  {
+   "timestamp": 1706000000000,
+   "key": "NVDA",
+   "period": "Q1",
+   "eps": 4.44,
+   "eps_diluted": 4.4,
+   "revenue": 22150000000,
+   "net_income": 12610000000
+  },
+  {
+   "timestamp": 1700200000000,
+   "key": "AAPL",
+   "period": "Q1",
+   "eps": 1.46,
+   "eps_diluted": 1.46,
+   "revenue": 89500000000,
+   "net_income": 22960000000
+  }
+ ]
+}

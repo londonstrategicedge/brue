@@ -1,0 +1,38 @@
+# Fed dataset reads. Feed: --data econ=econ.json
+# The dataset name is referenced directly; there is no use alias.
+n = econ.latest("NFP")
+if n != na:
+    log(str(n.actual) + "|" + str(n.forecast) + "|" + str(n.surprise) + "|" + str(n.severity) + "|" + str(n.timestamp) + "|" + str(n.key))
+else:
+    log("none")
+
+p = econ.prev("NFP")
+if p != na:
+    log("prev:" + str(p.actual))
+else:
+    log("noprev")
+
+c = econ.latest("CPI")
+if c != na:
+    log("cpi:" + str(c.actual) + "|" + str(c.missing_field) + "|" + str(c.__dataset))
+else:
+    log("nocpi")
+
+g = econ.latest("GDP")
+if g != na:
+    log("gdp:" + str(g.actual) + "|" + str(g))
+else:
+    log("nogdp")
+
+same = econ.latest("NFP") == econ.latest("NFP")
+log("same:" + str(same))
+
+bad = econ.latest(42)
+if bad == na:
+    log("badkey")
+gone = econ.latest("GONE")
+if gone == na:
+    log("nokey")
+other = econ.refresh("NFP")
+if other == na:
+    log("nomethod")

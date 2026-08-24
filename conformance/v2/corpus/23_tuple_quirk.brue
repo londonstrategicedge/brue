@@ -1,0 +1,13 @@
+# run: --data EURUSD=<bars.csv>
+m = macd(EURUSD.h1.close, 12, 26, 9)
+first = m.first()
+lastv = m.last()
+sz = m.size()
+a, b, c, d = macd(EURUSD.h1.close, 12, 26, 9)
+persist n = 0
+n += 1
+# fire on the first bar and every 7th bar after it (bar index 0, 7, 14, ...):
+# n is incremented at the top of the bar, so n-1 is the 0-based bar index
+if (n - 1) % 7 == 0:
+    log(str(first)+"|"+str(lastv)+"|"+str(sz))
+    log(str(a)+"|"+str(b)+"|"+str(c)+"|"+str(d))

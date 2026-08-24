@@ -1,0 +1,15 @@
+t = tsi(EURUSD.h1.close, 25, 13)
+d = dpo(EURUSD.h1.close, 21)
+sk, sd = stoch_rsi(EURUSD.h1.close, 14, 14, 3, 3)
+cop = coppock(EURUSD.h1.close)
+tx = trix(EURUSD.h1.close, 15)
+uo = ultimate_osc(7, 14, 28)
+k = kst(EURUSD.h1.close)
+fi, ftr = fisher(10)
+sc = stc(EURUSD.h1.close, 23, 50, 10)
+persist n = 0
+n += 1
+if (n - 1) % 11 == 0:
+    log(str(t)+"|"+str(d)+"|"+str(sk)+"|"+str(sd))
+    log(str(cop)+"|"+str(tx)+"|"+str(uo)+"|"+str(k))
+    log(str(fi)+"|"+str(ftr)+"|"+str(sc))

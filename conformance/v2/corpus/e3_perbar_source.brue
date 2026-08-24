@@ -1,0 +1,6 @@
+s = EURUSD.h1.close - EURUSD.h1.open
+z = zscore(s, 20)
+# the buy below never runs (line 2 fails first); it exists because the
+# order scan is what binds EURUSD to the primary bars, so line 1 evaluates and
+# the tested per-bar-variable-as-source check is the error that fires
+buy("EURUSD", 1)

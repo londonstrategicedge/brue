@@ -1,0 +1,13 @@
+co = correlation(EURUSD.h1.close, EURUSD.h1.volume, 20)
+lr = linreg(EURUSD.h1.close, 14, 0)
+ls = linreg_slope(EURUSD.h1.close, 14)
+r2 = r_squared(EURUSD.h1.close, 14)
+z = zscore(EURUSD.h1.close, 20)
+be = beta(EURUSD.h1.close, EURUSD.h1.open, 30)
+sp = spread(EURUSD.h1.high, EURUSD.h1.low)
+ra = ratio(EURUSD.h1.close, EURUSD.h1.open)
+persist bar_n = 0
+bar_n += 1
+if (bar_n - 1) % 9 == 0:
+    log(str(co)+"|"+str(lr)+"|"+str(ls)+"|"+str(r2))
+    log(str(z)+"|"+str(be)+"|"+str(sp)+"|"+str(ra))

@@ -1,0 +1,24 @@
+# run: --data EURUSD=<bars.csv>
+s = "Hello Brue World"
+up = s.upper()
+lo = s.lower()
+co = s.contains("Brue")
+sw = s.starts_with("Hello")
+ew = s.ends_with("World")
+re = s.replace("Brue", "Rust")
+sp = s.split(" ")
+tr = "  pad  ".trim()
+ln = s.length()
+# bar counter: n increments at bar top, so bi = n - 1 is the 0-based bar index
+persist n = 0
+n += 1
+bi = n - 1
+f1 = f"close={EURUSD.h1.close:.2f} vol={EURUSD.h1.volume}"
+# 499 = last bar index of the canonical bars_med.csv (500 bars); there is no
+# last_bar_index builtin, so the total is written as a constant
+f2 = f"bar {bi} of 499"
+plain = f"no braces here"
+if bi % 9 == 0:
+    log(up+"|"+lo+"|"+str(co)+"|"+str(sw)+"|"+str(ew))
+    log(re+"|"+sp.join("_")+"|"+tr+"|"+str(ln))
+    log(f1+"|"+f2+"|"+plain)

@@ -1,0 +1,30 @@
+# Every trend builtin here reads the primary bars implicitly, so no
+# market name is needed anywhere in this script.
+ax, pdi, mdi = adx(14)
+stl, std = supertrend(10, 3)
+sr, sdir = sar(0.02, 0.02, 0.2)
+tk, kj, sa, sb, ck = ichimoku(9, 26, 52)
+au, ad, ao_ = aroon(25)
+jw, te, li = alligator()
+gu, gl = gator()
+vp, vm = vortex(14)
+chp = choppiness(14)
+bull, bear = elder_ray(13)
+mi = mass_index(25)
+ckl, cks = chande_kroll(10, 9, 1)
+zz = zigzag(5)
+fu, fd = fractals(2)
+v = vhf(28)
+persist bar_n = 0
+bar_n += 1
+# bar_n is incremented at the top of the bar, so on the first bar bar_n == 1.
+# Testing (bar_n - 1) % 13 == 0 fires on bars 1, 14, 27, ...: the first
+# bar and every 13th bar after it (bar index 0, 13, 26, ...).
+if (bar_n - 1) % 13 == 0:
+    log(str(ax)+"|"+str(pdi)+"|"+str(mdi))
+    log(str(stl)+"|"+str(std)+"|"+str(sr)+"|"+str(sdir))
+    log(str(tk)+"|"+str(kj)+"|"+str(sa)+"|"+str(sb)+"|"+str(ck))
+    log(str(au)+"|"+str(ad)+"|"+str(ao_)+"|"+str(jw)+"|"+str(te)+"|"+str(li))
+    log(str(gu)+"|"+str(gl)+"|"+str(vp)+"|"+str(vm)+"|"+str(chp))
+    log(str(bull)+"|"+str(bear)+"|"+str(mi)+"|"+str(ckl)+"|"+str(cks))
+    log(str(zz)+"|"+str(fu)+"|"+str(fd)+"|"+str(v))

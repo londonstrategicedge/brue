@@ -1,0 +1,32 @@
+a = abs(EURUSD.h1.close - EURUSD.h1.open)
+b = max(EURUSD.h1.high, EURUSD.h1.high[1], EURUSD.h1.high[2])
+c = min(EURUSD.h1.low, EURUSD.h1.low[1], 99.5)
+d = round(EURUSD.h1.close, 2)
+e = floor(EURUSD.h1.close)
+f = ceil(EURUSD.h1.close)
+g = sqrt(EURUSD.h1.volume)
+h = pow(EURUSD.h1.close / 100, 3.5)
+# log() is the diagnostic printer, so the natural logarithm is spelled
+# ln; the name log belongs to the printer.
+i = ln(EURUSD.h1.close)
+j = log10(EURUSD.h1.volume)
+k = exp(EURUSD.h1.close / 200)
+l = sign(EURUSD.h1.close - EURUSD.h1.open)
+hi = highest(EURUSD.h1.high, 20)
+lo = lowest(EURUSD.h1.low, 20)
+s = sum(EURUSD.h1.volume, 14)
+cu = crossunder(EURUSD.h1.close, sma(EURUSD.h1.close, 10))
+cx = cross(EURUSD.h1.close, sma(EURUSD.h1.close, 10))
+ri = rising(EURUSD.h1.close, 3)
+fa = falling(EURUSD.h1.close, 3)
+ch = change(EURUSD.h1.close, 5)
+bs = barssince(EURUSD.h1.close > EURUSD.h1.open)
+na_check = is_na(EURUSD.h1.close[5000])
+co = coalesce(EURUSD.h1.close[5000], -1)
+persist n = 0
+n += 1
+if (n - 1) % 9 == 0:
+    log(str(a)+"|"+str(b)+"|"+str(c)+"|"+str(d)+"|"+str(e)+"|"+str(f))
+    log(str(g)+"|"+str(h)+"|"+str(i)+"|"+str(j)+"|"+str(k)+"|"+str(l))
+    log(str(hi)+"|"+str(lo)+"|"+str(s)+"|"+str(cu)+"|"+str(cx))
+    log(str(ri)+"|"+str(fa)+"|"+str(ch)+"|"+str(bs)+"|"+str(na_check)+"|"+str(co))

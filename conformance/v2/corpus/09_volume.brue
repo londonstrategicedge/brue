@@ -1,0 +1,26 @@
+# Every volume builtin here reads the primary bars implicitly, so no
+# market name is needed anywhere in this script.
+o = obv()
+c = cmf(20)
+a = adl()
+f = force_index(13)
+e = eom(14)
+vs = vol_sma(20)
+n = nvi()
+p = pvi()
+pv = pvt()
+vr = vroc(14)
+nv = net_volume(14)
+tw = twiggs_mf(21)
+vo = vol_osc(5, 10)
+kv, ks = klinger(34, 55, 13)
+persist bar_n = 0
+bar_n += 1
+# bar_n is incremented at the top of the bar, so bar_n = bar index + 1.
+# Testing (bar_n - 1) % 13 == 0 fires on the first bar and every 13th bar
+# after it (bar index 0, 13, 26, ...).
+if (bar_n - 1) % 13 == 0:
+    log(str(o)+"|"+str(c)+"|"+str(a)+"|"+str(f))
+    log(str(e)+"|"+str(vs)+"|"+str(n)+"|"+str(p))
+    log(str(pv)+"|"+str(vr)+"|"+str(nv)+"|"+str(tw))
+    log(str(vo)+"|"+str(kv)+"|"+str(ks))

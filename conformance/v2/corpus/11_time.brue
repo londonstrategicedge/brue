@@ -1,0 +1,22 @@
+# Calendar and session builtins read the bar clock only; 'time' is part
+# of the language, so no market name is needed anywhere in this script.
+y = year(time)
+m = month(time)
+dm = dayofmonth(time)
+dw = dayofweek(time)
+h = hour(time)
+mi = minute(time)
+s = second(time)
+lon = in_session("london")
+ny = in_session("new_york")
+tok = in_session("tokyo")
+syd = in_session("sydney")
+fra = in_session("frankfurt")
+cust = in_session("09:30-16:00", tz="America/New_York")
+cust2 = in_session("2200-0500")
+persist bar_n = 0
+bar_n += 1
+# (bar_n - 1) % 7 == 0 fires on the first bar and every 7th bar after it (bar index 0, 7, 14, ...)
+if (bar_n - 1) % 7 == 0:
+    log(str(y)+"|"+str(m)+"|"+str(dm)+"|"+str(dw)+"|"+str(h)+"|"+str(mi)+"|"+str(s))
+    log(str(lon)+"|"+str(ny)+"|"+str(tok)+"|"+str(syd)+"|"+str(fra)+"|"+str(cust)+"|"+str(cust2))

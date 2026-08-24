@@ -1,0 +1,5 @@
+e = ema(EURUSD.h1.close)
+# the buy below never runs (line 1 fails first); it exists because the
+# order scan is what binds EURUSD to the primary bars, so the source resolves
+# and the tested missing-argument check is the error that fires
+buy("EURUSD", 1)

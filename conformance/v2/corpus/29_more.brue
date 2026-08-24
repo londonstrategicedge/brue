@@ -1,0 +1,17 @@
+# range() forms, a for loop over a range, nested ternaries and a chained if-else expression; p binds the ema directly; close("EURUSD") binds the primary bars; sampled every 9th bar via a persist bar counter
+close("EURUSD")
+persist n = -1
+n += 1
+p = ema(EURUSD.h1.close, 10)
+r1 = range(5)
+r2 = range(2, 8)
+r3 = range(10, 0, -2)
+r4 = range(0, 1, 0)
+s1 = 0
+for i in r3:
+    s1 += i
+nested = EURUSD.h1.close > EURUSD.h1.open ? (EURUSD.h1.high > EURUSD.h1.close ? 1 : 2) : (EURUSD.h1.low < EURUSD.h1.open ? 3 : 4)
+chain = 5 if EURUSD.h1.close > 200 else 6 if EURUSD.h1.close > 100 else 7
+if n % 9 == 0:
+    log(str(p)+"|"+str(r1.size())+"|"+str(r2.first())+"|"+str(r2.last()))
+    log(str(s1)+"|"+str(r4.size())+"|"+str(nested)+"|"+str(chain))

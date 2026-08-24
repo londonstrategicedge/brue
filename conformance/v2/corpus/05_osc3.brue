@@ -1,0 +1,21 @@
+rv, rs = rvi(10)
+cr = connors_rsi(EURUSD.h1.close, 3, 2, 100)
+cm = cmo(EURUSD.h1.close, 9)
+ap = apo(EURUSD.h1.close, 12, 26)
+pl, ps, ph = ppo(EURUSD.h1.close, 12, 26, 9)
+vl, vs, vh = pvo(12, 26, 9)
+q = qstick(8)
+b = bop(14)
+psy = psych_line(EURUSD.h1.close, 12)
+pf = pfe(EURUSD.h1.close, 10)
+ui = ulcer_index(EURUSD.h1.close, 14)
+si, ss = smi(13, 25, 2)
+rvix = rel_vol_index(EURUSD.h1.close, 10, 14)
+persist n = 0
+n += 1
+if (n - 1) % 11 == 0:
+    log(str(rv)+"|"+str(rs)+"|"+str(cr)+"|"+str(cm))
+    log(str(ap)+"|"+str(pl)+"|"+str(ps)+"|"+str(ph))
+    log(str(vl)+"|"+str(vs)+"|"+str(vh)+"|"+str(q))
+    log(str(b)+"|"+str(psy)+"|"+str(pf)+"|"+str(ui))
+    log(str(si)+"|"+str(ss)+"|"+str(rvix))

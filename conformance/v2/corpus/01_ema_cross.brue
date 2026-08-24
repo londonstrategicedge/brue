@@ -1,0 +1,11 @@
+# run: --capital 10000 --commission 0.001
+persist n = 0
+n += 1
+fast = ema(EURUSD.h1.close, 9)
+slow = ema(EURUSD.h1.close, 21)
+if crossover(fast, slow):
+    buy("EURUSD", 2)
+if crossunder(fast, slow):
+    close("EURUSD")
+if (n - 1) % 13 == 0:
+    log(str(fast) + "|" + str(slow))

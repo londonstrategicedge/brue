@@ -1,0 +1,3 @@
+# a misspelled kwarg on a builtin must fail.
+# No market binding needed: the kwarg check fires before source resolution.
+e = ema(EURUSD.h1.close, lenght=20)

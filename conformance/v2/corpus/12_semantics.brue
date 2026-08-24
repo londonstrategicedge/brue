@@ -1,0 +1,30 @@
+a = na == na
+b = EURUSD.h1.close / 0
+c = EURUSD.h1.close % 0
+d = 7 % 3
+e = -7 % 3
+f = 2 ** 10
+g = 2 ** 0.5
+h = "px: " + EURUSD.h1.close
+i = "flag: " + (EURUSD.h1.close > EURUSD.h1.open)
+j = "none: " + na
+persist counter = 0
+counter += 1
+persist weird = 0
+weird += "not a number"
+k = 5 if EURUSD.h1.close > EURUSD.h1.open else -5
+l = EURUSD.h1.close > EURUSD.h1.open ? 1 : 0
+m = 1 < 2 < 3
+n = 3 > 2 > 1
+o = not (EURUSD.h1.close > EURUSD.h1.open)
+p = -EURUSD.h1.close
+q = true and false
+r = true or false
+# The persist counter doubles as the bar clock: it equals the 1-based bar
+# number (bar index + 1), so (counter - 1) % 9 == 0 fires on the first bar
+# and every 9th bar after it (bar index 0, 9, 18, ...).
+if (counter - 1) % 9 == 0:
+    log(str(a)+"|"+str(b)+"|"+str(c)+"|"+str(d)+"|"+str(e))
+    log(str(f)+"|"+str(g)+"|"+h+"|"+i+"|"+j)
+    log(str(counter)+"|"+str(weird)+"|"+str(k)+"|"+str(l))
+    log(str(m)+"|"+str(n)+"|"+str(o)+"|"+str(p)+"|"+str(q)+"|"+str(r))

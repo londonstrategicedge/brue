@@ -1,0 +1,16 @@
+# Numeric edge cases: a huge literal, a tiny literal, str() of floats and -0.0, f-string rounding, 1/0 and 0.1+0.2; sampled every 40th bar via a persist bar counter
+persist n = -1
+n += 1
+big = 1000000000000000000000 * 1.5
+small = 0.0000001
+tiny_str = str(small)
+big_str = str(big)
+half = str(2.5)
+frac = f"{1.005:.2f}|{1.125:.2f}|{2.5:.0f}|{-2.5:.0f}"
+zero = str(-0.0)
+inf_pf = 1 / 0
+sum01 = 0.1 + 0.2
+if n % 40 == 0:
+    log(big_str+"|"+tiny_str+"|"+half+"|"+zero)
+    log(frac)
+    log(str(inf_pf)+"|"+str(sum01))

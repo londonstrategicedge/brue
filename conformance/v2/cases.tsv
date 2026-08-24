@@ -1,0 +1,38 @@
+# stem	extra_args	expect
+01_ema_cross	--capital 10000 --commission 0.001	success
+02_mas	--data EURUSD=conformance/out/bars_med.csv	success
+03_osc1	--data EURUSD=conformance/out/bars_med.csv	success
+04_osc2	--data EURUSD=conformance/out/bars_med.csv	success
+05_osc3	--data EURUSD=conformance/out/bars_med.csv	success
+06_mathlogic	--data EURUSD=conformance/out/bars_med.csv	success
+07_volatility	--data EURUSD=conformance/out/bars_med.csv	success
+08_trend		success
+09_volume		success
+10_stats	--data EURUSD=conformance/out/bars_med.csv	success
+11_time		success
+12_semantics	--data EURUSD=conformance/out/bars_med.csv	success
+13_history	--data EURUSD=conformance/out/bars_med.csv	success
+14_controlflow	--data EURUSD=conformance/out/bars_med.csv	success
+15_functions	--data EURUSD=conformance/out/bars_med.csv	success
+16_arrays		success
+17_maps	--data EURUSD=conformance/out/bars_med.csv	success
+18_types	--data EURUSD=conformance/out/bars_med.csv	success
+19_strings	--data EURUSD=conformance/out/bars_med.csv	success
+21_inputs	--data EURUSD=conformance/out/bars_med.csv	success
+22_strategy_deep	--capital 25000 --commission 0.5 --commission-type fixed --slippage 0.01	success
+23_tuple_quirk	--data EURUSD=conformance/out/bars_med.csv	success
+27_numeric_edges		success
+28_series_promotion		success
+29_more		success
+31_use_fed	--data BTCUSD=conformance/v2/fixtures/31_use_fed/BTCUSD.csv --data SPY=conformance/v2/fixtures/31_use_fed/SPY.csv	success
+32_econ_fed	--data econ=conformance/v2/fixtures/32_econ_fed/econ.json	success
+33_multi_fed	--data cot=conformance/v2/fixtures/33_multi_fed/cot.json --data earnings=conformance/v2/fixtures/33_multi_fed/earnings.json	success
+e10_member_assign		error:Cannot assign to
+e11_kwarg_unknown		error:has no parameter
+e1_unknown_fn		error:Unknown function
+e2_missing_arg		error:missing required argument
+e3_perbar_source		error:per-bar computed variable
+e5_parse_colon		error:Expected COLON
+e6_tokenize		error:Unexpected character
+e8_unterminated		error:Unterminated string
+e9_bad_number		error:Invalid number

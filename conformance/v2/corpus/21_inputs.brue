@@ -1,0 +1,18 @@
+# run: --data EURUSD=<bars.csv>
+len = input(14, "Length", min=2, max=100, step=1)
+thr = input(1.5, "Threshold")
+flag = input(true, "Enabled")
+name = input("hello", "Name")
+tf = input("4H", "HTF")
+sym = input("BTCUSD", "Pair")
+sess = input("0930-1600", "Hours")
+pr = input(101.25, "Level")
+txt = input("a,b,c", "List")
+tm = input(1700000000000, "Start")
+r = rsi(EURUSD.h1.close, len)
+persist n = 0
+n += 1
+if (n - 1) % 9 == 0:
+    log(str(len)+"|"+str(thr)+"|"+str(flag)+"|"+name)
+    log(tf+"|"+sym+"|"+sess+"|"+str(pr)+"|"+txt+"|"+str(tm))
+    log(str(r))

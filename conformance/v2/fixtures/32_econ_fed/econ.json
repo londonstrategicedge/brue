@@ -1,0 +1,94 @@
+{
+ "snapshots": [
+  {
+   "timestamp": 1699999000000,
+   "key": "NFP",
+   "actual": 150,
+   "forecast": 160,
+   "previous": 140,
+   "severity": 3,
+   "surprise": -10,
+   "change": 10
+  },
+  {
+   "timestamp": 1700100000000,
+   "key": "NFP",
+   "actual": 175,
+   "forecast": 170,
+   "previous": 150,
+   "severity": 3,
+   "surprise": 5,
+   "change": 25
+  },
+  {
+   "timestamp": 1700100000000,
+   "key": "NFP",
+   "actual": 176.5,
+   "forecast": 170,
+   "previous": 150,
+   "severity": 3,
+   "surprise": 6.5,
+   "change": 26.5
+  },
+  {
+   "timestamp": 1700900000000,
+   "key": "NFP",
+   "actual": 182,
+   "forecast": 180,
+   "previous": 176.5,
+   "severity": 3,
+   "surprise": 2,
+   "change": 5.5
+  },
+  {
+   "timestamp": 1705000000000,
+   "key": "NFP",
+   "actual": 190,
+   "forecast": 185,
+   "previous": 182,
+   "severity": 3,
+   "surprise": 5,
+   "change": 8
+  },
+  {
+   "timestamp": 1720000000000,
+   "key": "NFP",
+   "actual": 999,
+   "forecast": 0,
+   "previous": 0,
+   "severity": 3,
+   "surprise": 999,
+   "change": 999
+  },
+  {
+   "timestamp": 1700050000000,
+   "key": "CPI",
+   "actual": null,
+   "forecast": 3.1,
+   "previous": 3.4,
+   "severity": 2,
+   "surprise": null,
+   "change": null
+  },
+  {
+   "timestamp": 1701000000000,
+   "key": "CPI",
+   "actual": 2.9,
+   "forecast": 3,
+   "previous": 3.4,
+   "severity": 2,
+   "surprise": -0.1,
+   "change": -0.5
+  },
+  {
+   "timestamp": 1700000000000,
+   "key": "GDP",
+   "actual": 2.4,
+   "forecast": 2.2,
+   "previous": 2.1,
+   "severity": 1,
+   "surprise": 0.2,
+   "change": 0.3
+  }
+ ]
+}

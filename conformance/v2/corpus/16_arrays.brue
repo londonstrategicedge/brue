@@ -1,0 +1,21 @@
+persist n = 0
+n += 1
+a = [3, 1, 4, 1, 5, 9, 2.5]
+sz = a.size()
+mx = a.max()
+mn = a.min()
+av = a.avg()
+sm = a.sum()
+fi = a.first()
+la = a.last()
+inc = a.includes(4)
+inc2 = a.includes(7)
+j = a.join("-")
+a[0] = 99
+after = a.first()
+mixed = [1, "two", true, na]
+mj = mixed.join(",")
+if (n - 1) % 9 == 0:
+    log(str(sz)+"|"+str(mx)+"|"+str(mn)+"|"+str(av)+"|"+str(sm))
+    log(str(fi)+"|"+str(la)+"|"+str(inc)+"|"+str(inc2)+"|"+j)
+    log(str(after)+"|"+mj)
