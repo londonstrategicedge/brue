@@ -90,9 +90,10 @@ is byte-compared against frozen goldens (`conformance/run_all_py.sh`).
   history) plus `RunOptions.capture_intents`, which derives each closed
   bar's order intents from the script's own window state so live and
   historical runs share one decision path.
-- **Broker adapters.** Brue Connect (`brueconnect`, installed as a
-  dependency): the wire standard, the paper account, and the broker
-  adapters behind it. Credentials stay on the trader's machine.
+- **Broker adapters.** Brue Connect (`brueconnect`, shipped inside this
+  package; its guide is `BRUE_CONNECT.md`): the wire standard, the paper
+  account, and the broker adapters behind it. Credentials stay on the
+  trader's machine.
 - **Spec and conformance suite.** `SYNTAX.md` is the rulebook;
   `conformance/` holds the corpus and the frozen goldens so third-party
   tooling can target the language without semantic drift.

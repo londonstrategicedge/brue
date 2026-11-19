@@ -56,7 +56,7 @@ class _Session:
         except ImportError:
             raise BrueLiveError(
                 "the Brue Connect component is missing; reinstall with "
-                "`pip install --upgrade brue-lang` to restore it") from None
+                "`pip install --force-reinstall --upgrade brue-language` to restore it") from None
         self._ConnectorError = ConnectorError
         root = _state_root()
         (root / "paper").mkdir(parents=True, exist_ok=True)

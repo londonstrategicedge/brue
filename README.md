@@ -13,9 +13,10 @@ Two products, one install:
   what quantity, from which data source, at which timeframe is written where
   it acts.
 - **Brue Connect** (`brueconnect`, bundled inside this package): the broker
-  connector. One wire protocol, every broker an adapter, the built-in paper
-  account first. It ships with the language, so there is nothing else to
-  install; the language calls it.
+  connector. One wire protocol, every broker an adapter: the built-in paper
+  account, the LSE demo account, adapters for supported brokers, and a
+  starter adapter to fill in for any other broker. It ships with the language, so
+  there is nothing else to install; the language calls it.
 
 ```
 pip install brue-language
@@ -55,6 +56,12 @@ brue.buy("EURUSD", 0.5, sl=1.05, tp=1.12)                   # live, via Brue Con
 brue.close("EURUSD")
 ```
 
+`brue.buy`, `brue.sell` and `brue.close` trade the built-in paper account on
+your machine. To trade at a broker (the LSE demo account, a supported
+broker, or an adapter of your own), run the script with
+`python -m brueconnect.runner.live_driver --broker <name>`, or in the LSE
+Terminal.
+
 Historical runs simulate the fills (next-bar-open, brackets, commission,
 slippage) and report what was executed: the trade records, the log() lines,
 the canonical JSON. There is no stats block, no equity frame and no pandas
@@ -71,11 +78,31 @@ byte-compares the execution JSON against locked goldens. A fill or a formula
 cannot silently drift, and a live run re-derives the same order intents from
 the same script text.
 
+## Brue Connect
+
+A platform (the LSE Terminal, a notebook, a Brue script) talks to a broker
+through an adapter: a small program on your own machine that speaks one
+line-delimited JSON protocol on stdio. Write the adapter once and the broker
+works in every platform built on the protocol. Broker keys are kept on your
+machine and reach only the adapter, never a protocol message.
+
+- `brueconnect/`: the SDK (`Adapter`, `Connector`, the registry of linked
+  brokers), the adapters that ship, the starter adapter
+  `brueconnect/templates/my_broker_adapter.py`, and the conformance suite
+  that proves an adapter (`python -m brueconnect.conformance.run`).
+- [SPEC.md](https://github.com/londonstrategicedge/brue/blob/main/SPEC.md): the protocol. It is normative.
+- [ONBOARDING.md](https://github.com/londonstrategicedge/brue/blob/main/ONBOARDING.md): the questionnaire for a broker, before
+  anyone writes code.
+- [BRUE_CONNECT.md](https://github.com/londonstrategicedge/brue/blob/main/BRUE_CONNECT.md): how to write, test and list an adapter.
+- `tests/`: the connector's tests (`python3 -m unittest discover -s tests`,
+  about 20 minutes).
+
 ## Status
 
-Version 0.0.1. Pure Python, stdlib-only engine (pandas is optional and
-only used by the convenience frames in `brue.live` and
-`brue.Indicator.compute`).
+Version 0.0.2. Pure Python: the engine and the connector use the standard
+library only (pandas is optional and only used by the convenience frames in
+`brue.live` and `brue.Indicator.compute`; `websockets`, when it is installed,
+lets the LSE demo adapter stream its fills).
 
 ## Account login
 

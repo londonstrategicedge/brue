@@ -1,3 +1,6 @@
 __pycache__/
+*.pyc
 conformance/out/
 dist/
+.state/
+*.jsonl

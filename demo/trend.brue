@@ -1,0 +1,8 @@
+# run: --capital 100000
+fast = ema(EURUSD.m1.close, 3)
+slow = ema(EURUSD.m1.close, 8)
+
+if crossover(fast, slow):
+    buy("EURUSD", 0.05, sl=EURUSD.m1.close * 0.999, tp=EURUSD.m1.close * 1.002)
+if crossunder(fast, slow):
+    close("EURUSD")

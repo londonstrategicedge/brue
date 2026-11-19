@@ -9,7 +9,7 @@ connector. brue executes; research happens in plain Python on the results.
 """
 from __future__ import annotations
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 
 def run_script(source, bars):

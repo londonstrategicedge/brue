@@ -1,11 +1,13 @@
 [build-system]
-requires = ["hatchling"]
+# Pinned below 1.28 so the metadata version stays one PyPI's upload tooling
+# accepts (as for lse-data); 1.27 is the first with PEP 639 license-files.
+requires = ["hatchling>=1.27,<1.28"]
 build-backend = "hatchling.build"
 
 [project]
 name = "brue-language"
-version = "0.0.1"
-description = "Brue: the trade-entry language. buy/sell/close scripts that run identically in a historical run and live through Brue Connect."
+version = "0.0.2"
+description = "Brue: the trade-entry language, and Brue Connect, its broker connector. buy/sell/close scripts that run identically in a historical run and live at a broker."
 readme = "README.md"
 license = "MIT"
 license-files = ["LICENSE"]
@@ -21,9 +23,12 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Office/Business :: Financial :: Investment",
 ]
-# The bare "brue" name on PyPI is taken, so the distribution is brue-language
-# while the import stays brue. Pure standard library; tzdata only on Windows
-# for the session/time functions.
+# The broker connector (import brueconnect) ships inside this package, so a
+# single `pip install brue-language` gives both the language and the connector;
+# there is no separate connector package to install. The bare "brue" name on
+# PyPI is taken, hence brue-language for the distribution while the import is
+# brue. Both are pure standard library; tzdata only on Windows for the
+# session/time functions and the paper simulator's market hours.
 dependencies = ["tzdata; sys_platform == 'win32'"]
 
 [project.scripts]
@@ -31,19 +36,29 @@ brue = "brue.cli:main"
 
 [project.urls]
 Homepage = "https://londonstrategicedge.com"
+Repository = "https://github.com/londonstrategicedge/brue"
 
 [tool.hatch.build.targets.wheel]
-packages = ["brue"]
+# Two import packages ship together: the language (brue) and the broker
+# connector (brueconnect), so one install gives both.
+packages = ["brue", "brueconnect"]
 
 [tool.hatch.build.targets.sdist]
-# Explicit allowlist: the engine, its docs, and the conformance suite. Repo
-# housekeeping and scratch output stay out of the release.
+# Explicit allowlist: both packages, their docs, the language's conformance
+# suite and the connector's tests. Repo housekeeping and scratch output stay
+# out of the release.
 include = [
   "brue/",
+  "brueconnect/",
   "conformance/run_all_py.sh",
   "conformance/v2/",
+  "tests/",
+  "demo/",
   "ARCHITECTURE.md",
   "SYNTAX.md",
+  "SPEC.md",
+  "ONBOARDING.md",
+  "BRUE_CONNECT.md",
   "README.md",
   "LICENSE",
   "pyproject.toml",
